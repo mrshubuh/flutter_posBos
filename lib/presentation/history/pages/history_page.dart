@@ -4,6 +4,7 @@ import 'package:flutter_pos/core/extensions/build_context_ext.dart';
 
 import '../../../core/components/spaces.dart';
 
+import '../../../core/constants/colors.dart';
 import '../../home/pages/dashboard_page.dart';
 import '../bloc/history/history_bloc.dart';
 
@@ -23,10 +24,20 @@ class _HistoryPageState extends State<HistoryPage> {
     context.read<HistoryBloc>().add(const HistoryEvent.fetch());
   }
 
+  Future<void> saveAsPdf() async {
+    //print all history to pdf
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Saving as PDF...'),
+        backgroundColor: AppColors.primary,
+        duration: Duration(seconds: 3),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     const paddingHorizontal = EdgeInsets.symmetric(horizontal: 16.0);
-
     return Scaffold(
         appBar: AppBar(
           leading: IconButton(
@@ -42,6 +53,14 @@ class _HistoryPageState extends State<HistoryPage> {
               )),
           elevation: 0,
           centerTitle: true,
+          actions: [
+            IconButton(
+              onPressed: () {
+                saveAsPdf();
+              },
+              icon: const Icon(Icons.save_as_outlined),
+            ),
+          ],
         ),
         body: BlocBuilder<HistoryBloc, HistoryState>(
           builder: (context, state) {

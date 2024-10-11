@@ -132,8 +132,6 @@ class _OrderPageState extends State<OrderPage> {
 
                                     //print for customer
                                     CwbPrint.instance.printReceipt(printInt);
-                                    // //print for kitchen
-                                    // CwbPrint.instance.printReceipt(printInt);
                                     //clear checkout
                                     context.read<CheckoutBloc>().add(
                                           const CheckoutEvent.started(),
@@ -211,50 +209,94 @@ class _OrderPageState extends State<OrderPage> {
                     return const SizedBox.shrink();
                   },
                   success: (data, qty, total, draftName) {
-                    return ValueListenableBuilder(
-                      valueListenable: indexValue,
-                      builder: (context, value, _) => Row(
-                        children: [
-                          Flexible(
-                            child: MenuButton(
-                              iconPath: Assets.icons.cash.path,
-                              label: 'CASH',
-                              isActive: value == 1,
-                              onPressed: () {
-                                indexValue.value = 1;
-                                context.read<OrderBloc>().add(
-                                    OrderEvent.addPaymentMethod(
-                                        'Tunai', data, draftName));
-                              },
+                    return Column(
+                      children: [
+                        // New Row for Discount, Tax, and Service Charge
+                        Row(
+                          children: [
+                            Flexible(
+                              child: MenuButton(
+                                iconPath: Assets.icons.cash.path,
+                                label: 'Discount',
+                                isActive: false,
+                                onPressed: () {
+                                  // Add discount logic here
+                                },
+                              ),
                             ),
-                          ),
-                          const SpaceWidth(16.0),
-                          Flexible(
-                            child: MenuButton(
-                              iconPath: Assets.icons.qrCode.path,
-                              label: 'QR',
-                              isActive: value == 2,
-                              onPressed: () {
-                                indexValue.value = 2;
-                                context.read<OrderBloc>().add(
-                                    OrderEvent.addPaymentMethod(
-                                        'QRIS', data, draftName));
-                              },
+                            const SpaceWidth(16.0),
+                            Flexible(
+                              child: MenuButton(
+                                iconPath: Assets.icons.cash.path,
+                                label: 'Tax',
+                                isActive: false,
+                                onPressed: () {
+                                  // Add tax logic here
+                                },
+                              ),
                             ),
-                          ),
-                          const SpaceWidth(16.0),
-                          Flexible(
-                            child: MenuButton(
-                              iconPath: Assets.icons.debit.path,
-                              label: 'TRANSFER',
-                              isActive: value == 3,
-                              onPressed: () {
-                                indexValue.value = 3;
-                              },
+                            const SpaceWidth(16.0),
+                            Flexible(
+                              child: MenuButton(
+                                iconPath: Assets.icons.cash.path,
+                                label: 'Service Charge',
+                                isActive: false,
+                                onPressed: () {
+                                  // Add service charge logic here
+                                },
+                              ),
                             ),
+                          ],
+                        ),
+                        const SpaceHeight(20.0),
+
+                        // Original Payment Method Buttons
+                        ValueListenableBuilder(
+                          valueListenable: indexValue,
+                          builder: (context, value, _) => Row(
+                            children: [
+                              Flexible(
+                                child: MenuButton(
+                                  iconPath: Assets.icons.cash.path,
+                                  label: 'CASH',
+                                  isActive: value == 1,
+                                  onPressed: () {
+                                    indexValue.value = 1;
+                                    context.read<OrderBloc>().add(
+                                        OrderEvent.addPaymentMethod(
+                                            'Tunai', data, draftName));
+                                  },
+                                ),
+                              ),
+                              const SpaceWidth(16.0),
+                              Flexible(
+                                child: MenuButton(
+                                  iconPath: Assets.icons.qrCode.path,
+                                  label: 'QR',
+                                  isActive: value == 2,
+                                  onPressed: () {
+                                    indexValue.value = 2;
+                                    context.read<OrderBloc>().add(
+                                        OrderEvent.addPaymentMethod(
+                                            'QRIS', data, draftName));
+                                  },
+                                ),
+                              ),
+                              const SpaceWidth(16.0),
+                              Flexible(
+                                child: MenuButton(
+                                  iconPath: Assets.icons.debit.path,
+                                  label: 'TRANSFER',
+                                  isActive: value == 3,
+                                  onPressed: () {
+                                    indexValue.value = 3;
+                                  },
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     );
                   },
                 );
