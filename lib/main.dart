@@ -9,6 +9,7 @@ import 'package:flutter_pos/data/datasources/product_local_datasource.dart';
 import 'package:flutter_pos/data/datasources/product_remote_datasource.dart';
 import 'package:flutter_pos/data/datasources/report_remote_datasource.dart';
 import 'package:flutter_pos/presentation/auth/pages/login_page.dart';
+import 'package:flutter_pos/presentation/auth/pages/splash_screen_pages.dart';
 import 'package:flutter_pos/presentation/draft_order/bloc/draft_order/draft_order_bloc.dart';
 import 'package:flutter_pos/presentation/history/bloc/history/history_bloc.dart';
 import 'package:flutter_pos/presentation/home/bloc/category/category_bloc.dart';
@@ -100,15 +101,16 @@ class MyApp extends StatelessWidget {
             ),
           ),
         ),
-        home: FutureBuilder<bool>(
-            future: AuthLocalDatasource().isAuth(),
-            builder: (context, snapshot) {
-              if (snapshot.hasData && snapshot.data == true) {
-                return const DashboardPage();
-              } else {
-                return const LoginPage();
-              }
-            }),
+        // home: FutureBuilder<bool>(
+        //     future: AuthLocalDatasource().isAuth(),
+        //     builder: (context, snapshot) {
+        //       if (snapshot.hasData && snapshot.data == true) {
+        //         return const DashboardPage();
+        //       } else {
+        //         return const LoginPage();
+        //       }
+        //     }),
+        home: SplashScreenPages(),
       ),
     );
   }

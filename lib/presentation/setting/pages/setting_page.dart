@@ -43,168 +43,170 @@ class _SettingPageState extends State<SettingPage> {
             ),
           ),
         ),
-        body: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Row(
-                children: [
-                  Flexible(
-                    child: MenuButton(
-                      iconPath: Assets.images.manageProduct.path,
-                      label: 'Setting Product',
-                      onPressed: () => context.push(const ManageProductPage()),
-                      isImage: true,
-                    ),
-                  ),
-                  const SpaceWidth(15.0),
-                  Flexible(
-                    child: MenuButton(
-                      iconPath: Assets.images.managePrinter.path,
-                      label: 'Setting Printer',
-                      onPressed: () {
-                        context.push(const ManagePrinterPage());
-                      },
-                      isImage: true,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SpaceHeight(20.0),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Row(
-                children: [
-                  Flexible(
-                    child: MenuButton(
-                      iconPath: Assets.images.manageQr.path,
-                      label: 'QRIS Server Key',
-                      onPressed: () => context.push(const SaveServerKeyPage()),
-                      isImage: true,
-                    ),
-                  ),
-                  const SpaceWidth(15.0),
-                  Flexible(
-                    child: MenuButton(
-                      iconPath: Assets.images.sync.path,
-                      label: 'Sync Data',
-                      onPressed: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const SyncDataPage()));
-                      },
-                      isImage: true,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SpaceHeight(20.0),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Row(
-                children: [
-                  Flexible(
-                    child: MenuButton(
-                      iconPath: Assets.images.report.path,
-                      label: 'Report',
-                      onPressed: () => context.push(const ReportPage()),
-                      isImage: true,
-                    ),
-                  ),
-                  const SpaceWidth(15.0),
-                  Flexible(
-                    child: BlocListener<SyncOrderBloc, SyncOrderState>(
-                      listener: (context, state) {
-                        state.maybeMap(
-                          orElse: () {},
-                          successCloseChasier: (_) {
-                            context.read<CloseCashierBloc>().add(
-                                  const CloseCashierEvent.closeCashier(),
-                                );
-
-                            context.pushReplacement(const LoginPage());
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                backgroundColor: Colors.green,
-                                content: Text('Close Kasir Success'),
-                              ),
-                            );
-                          },
-                        );
-                      },
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Row(
+                  children: [
+                    Flexible(
                       child: MenuButton(
-                        iconPath: Assets.images.close.path,
-                        label: 'Close Kasir',
-                        onPressed: () async {
-                          showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  title: const Text('Close Kasir'),
-                                  content: const Text(
-                                      'Are you sure want to close kasir?'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.pop(context);
-                                      },
-                                      child: const Text('Cancel'),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        context.read<SyncOrderBloc>().add(
-                                              const SyncOrderEvent
-                                                  .sendOrderForCloseChasier(),
-                                            );
-                                        Navigator.pop(context);
-                                      },
-                                      child: const Text('Yes'),
-                                    ),
-                                  ],
-                                );
-                              });
-                          // context.read<SyncOrderBloc>().add(
-                          //     const SyncOrderEvent.sendOrderForCloseChasier());
-                          // Navigator.push(
-                          //     context,
-                          //     MaterialPageRoute(
-                          //         builder: (context) => const SyncDataPage()));
+                        iconPath: Assets.images.manageProduct.path,
+                        label: 'Setting Product',
+                        onPressed: () => context.push(const ManageProductPage()),
+                        isImage: true,
+                      ),
+                    ),
+                    const SpaceWidth(15.0),
+                    Flexible(
+                      child: MenuButton(
+                        iconPath: Assets.images.managePrinter.path,
+                        label: 'Setting Printer',
+                        onPressed: () {
+                          context.push(const ManagePrinterPage());
                         },
                         isImage: true,
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const SpaceHeight(60),
-            BlocConsumer<LogoutBloc, LogoutState>(
-              listener: (context, state) {
-                state.maybeMap(
-                  orElse: () {},
-                  success: (_) {
-                    AuthLocalDatasource().removeAuthData();
-                    Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const LoginPage()));
-                  },
-                );
-              },
-              builder: (context, state) {
-                return ElevatedButton(
-                  onPressed: () {
-                    context.read<LogoutBloc>().add(const LogoutEvent.logout());
-                  },
-                  child: const Text('Logout'),
-                );
-              },
-            ),
-            const Divider(),
-          ],
+              const SpaceHeight(20.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: MenuButton(
+                        iconPath: Assets.images.manageQr.path,
+                        label: 'QRIS Server Key',
+                        onPressed: () => context.push(const SaveServerKeyPage()),
+                        isImage: true,
+                      ),
+                    ),
+                    const SpaceWidth(15.0),
+                    Flexible(
+                      child: MenuButton(
+                        iconPath: Assets.images.sync.path,
+                        label: 'Sync Data',
+                        onPressed: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const SyncDataPage()));
+                        },
+                        isImage: true,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SpaceHeight(20.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: MenuButton(
+                        iconPath: Assets.images.report.path,
+                        label: 'Report',
+                        onPressed: () => context.push(const ReportPage()),
+                        isImage: true,
+                      ),
+                    ),
+                    const SpaceWidth(15.0),
+                    Flexible(
+                      child: BlocListener<SyncOrderBloc, SyncOrderState>(
+                        listener: (context, state) {
+                          state.maybeMap(
+                            orElse: () {},
+                            successCloseChasier: (_) {
+                              context.read<CloseCashierBloc>().add(
+                                    const CloseCashierEvent.closeCashier(),
+                                  );
+          
+                              context.pushReplacement(const LoginPage());
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  backgroundColor: Colors.green,
+                                  content: Text('Close Kasir Success'),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                        child: MenuButton(
+                          iconPath: Assets.images.close.path,
+                          label: 'Close Kasir',
+                          onPressed: () async {
+                            showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: const Text('Close Kasir'),
+                                    content: const Text(
+                                        'Are you sure want to close kasir?'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                        },
+                                        child: const Text('Cancel'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          context.read<SyncOrderBloc>().add(
+                                                const SyncOrderEvent
+                                                    .sendOrderForCloseChasier(),
+                                              );
+                                          Navigator.pop(context);
+                                        },
+                                        child: const Text('Yes'),
+                                      ),
+                                    ],
+                                  );
+                                });
+                            // context.read<SyncOrderBloc>().add(
+                            //     const SyncOrderEvent.sendOrderForCloseChasier());
+                            // Navigator.push(
+                            //     context,
+                            //     MaterialPageRoute(
+                            //         builder: (context) => const SyncDataPage()));
+                          },
+                          isImage: true,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SpaceHeight(60),
+              BlocConsumer<LogoutBloc, LogoutState>(
+                listener: (context, state) {
+                  state.maybeMap(
+                    orElse: () {},
+                    success: (_) {
+                      AuthLocalDatasource().removeAuthData();
+                      Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const LoginPage()));
+                    },
+                  );
+                },
+                builder: (context, state) {
+                  return ElevatedButton(
+                    onPressed: () {
+                      context.read<LogoutBloc>().add(const LogoutEvent.logout());
+                    },
+                    child: const Text('Logout'),
+                  );
+                },
+              ),
+              const Divider(),
+            ],
+          ),
         ));
   }
 }

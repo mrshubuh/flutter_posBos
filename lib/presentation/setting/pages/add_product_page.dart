@@ -2,10 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_pos/core/extensions/build_context_ext.dart';
 import 'package:flutter_pos/core/extensions/string_ext.dart';
-import 'package:flutter_pos/presentation/history/pages/history_page.dart';
-import 'package:flutter_pos/presentation/home/pages/dashboard_page.dart';
 import 'package:flutter_pos/presentation/setting/models/category_model.dart';
 import 'package:image_picker/image_picker.dart';
 

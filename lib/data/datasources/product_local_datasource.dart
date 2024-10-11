@@ -61,7 +61,7 @@ class ProductLocalDatasource {
     await db.execute('''
       CREATE TABLE categories (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        category_id INTEGER,
+        category_id INTEGER NULLABLE,
         name TEXT
       )
     ''');
@@ -219,17 +219,24 @@ class ProductLocalDatasource {
   //get order item by id order
   Future<List<OrderItem>> getOrderItemByOrderId(int idOrder) async {
     final db = await instance.database;
-    final result = await db.query('order_items', where: 'id_order = $idOrder');
+    final result = await db
+        .query('order_items', where: 'id_order = ?', whereArgs: [idOrder]);
 
     List<OrderItem> results = await Future.wait(result.map((item) async {
-      // Your asynchronous operation here
-      final product = await getProductById(item['id_product'] as int);
-      return OrderItem(product: product!, quantity: item['quantity'] as int);
+      // Ensure id_product is not null before fetching the product
+      final idProduct = item['id_product'] as int?;
+      if (idProduct != null) {
+        final product = await getProductById(idProduct);
+        return OrderItem(product: product!, quantity: item['quantity'] as int);
+      } else {
+        // Handle the case where id_product is null
+        throw Exception('Product ID is null for order item: $item');
+      }
     }));
-    return results;
 
-    // return result.map((e) => OrderItem.fromMap(e)).toList();
+    return results;
   }
+
 
   Future<Database> get database async {
     if (_database != null) return _database!;

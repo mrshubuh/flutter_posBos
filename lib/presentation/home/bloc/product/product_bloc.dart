@@ -90,5 +90,32 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
 
       emit(ProductState.success(products));
     });
+
+    //edit
+    // on<_EditProduct>((event, emit) async {
+    //   emit(const ProductState.loading());
+    //   final requestData = ProductRequestModel(
+    //     name: event.product.name,
+    //     price: event.product.price,
+    //     stock: event.product.stock,
+    //     category: event.product.category,
+    //     categoryId: event.product.categoryId,
+    //     isBestSeller: event.product.isBestSeller ? 1 : 0,
+    //     image: event.image,
+    //   );
+    //   final response = await _productRemoteDatasource.editProduct(
+    //     event.product.id!,
+    //     requestData
+    //   );
+    //   // products.add(newProduct);
+    //   response.fold(
+    //     (l) => emit(ProductState.error(l)),
+    //     (r) {
+    //       products.add(r.data);
+    //       emit(ProductState.success(products));
+    //     },
+    //   );
+    //   emit(ProductState.success(products));
+    // });
   }
 }

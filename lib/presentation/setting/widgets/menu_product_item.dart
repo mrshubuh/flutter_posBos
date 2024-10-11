@@ -1,11 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_pos/data/models/response/product_response_model.dart';
 
 import '../../../core/components/buttons.dart';
 import '../../../core/components/spaces.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/variables.dart';
+import '../../../data/models/response/product_response_model.dart';
+import '../pages/edit_product_page.dart';
 
 class MenuProductItem extends StatelessWidget {
   final Product data;
@@ -142,7 +143,13 @@ class MenuProductItem extends StatelessWidget {
                     const SpaceWidth(6.0),
                     Flexible(
                       child: Button.outlined(
-                        onPressed: () {},
+                        onPressed: () {
+                          //route to edit page
+                          Navigator.push(context,
+                              MaterialPageRoute(builder: (context) {
+                            return const EditProductPage();
+                          }));
+                        },
                         label: 'Edit',
                         fontSize: 8.0,
                         height: 31,

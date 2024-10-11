@@ -13,4 +13,6 @@ class ProductEvent with _$ProductEvent {
   const factory ProductEvent.searchProduct(String query) = _SearchProduct;
   //fetch from state
   const factory ProductEvent.fetchAllFromState() = _FetchAllFromState;
+  //edit product
+  // const factory ProductEvent.editProduct(Product product, XFile image) = _EditProduct;
 }
