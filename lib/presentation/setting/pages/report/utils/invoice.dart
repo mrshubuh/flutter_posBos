@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_pos/core/extensions/int_ext.dart';
 import 'package:flutter_pos/core/extensions/string_ext.dart';
-import 'package:flutter_pos/presentation/setting/pages/add_product_page.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart';
@@ -148,7 +147,7 @@ class Invoice {
         ],
       );
 
-  static buildSimpleText({
+  static Row buildSimpleText({
     required String title,
     required String value,
   }) {
@@ -165,7 +164,7 @@ class Invoice {
     );
   }
 
-  static buildTextPrice({
+  static Container buildTextPrice({
     required String title,
     required String value,
     double width = double.infinity,

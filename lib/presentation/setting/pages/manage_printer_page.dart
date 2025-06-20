@@ -1,4 +1,3 @@
-import 'package:esc_pos_utils_plus/esc_pos_utils_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_pos/core/extensions/build_context_ext.dart';
@@ -8,7 +7,6 @@ import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
 import '../../../core/components/spaces.dart';
 import '../../../core/constants/colors.dart';
 import '../../../data/datasources/auth_local_datasource.dart';
-import '../models/printer_model.dart';
 import '../widgets/menu_printer_button.dart';
 import '../widgets/menu_printer_content.dart';
 
@@ -38,7 +36,7 @@ class _ManagePrinterPageState extends State<ManagePrinterPage> {
     loadDataPrinter();
   }
 
-  loadDataPrinter() async {
+  Future<void> loadDataPrinter() async {
     macConnected = await AuthLocalDatasource().getPrinter();
     if (macConnected != '') {
       macName = macConnected!;
@@ -167,11 +165,10 @@ class _Body extends StatelessWidget {
   final Function(String) clickHandler;
 
   const _Body({
-    Key? key,
     required this.macName,
     required this.datas,
     required this.clickHandler,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

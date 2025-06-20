@@ -1,7 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter_pos/core/extensions/int_ext.dart';
-import 'package:flutter_pos/data/models/request/order_request_model.dart';
 
 import '../../../../home/models/order_item.dart';
 

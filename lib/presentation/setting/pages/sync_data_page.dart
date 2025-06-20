@@ -1,13 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_pos/core/components/spaces.dart';
 import 'package:flutter_pos/core/extensions/build_context_ext.dart';
-import 'package:flutter_pos/data/datasources/auth_local_datasource.dart';
 import 'package:flutter_pos/presentation/home/bloc/product/product_bloc.dart';
-import 'package:flutter_pos/presentation/order/bloc/order/order_bloc.dart';
 import 'package:flutter_pos/presentation/setting/bloc/sync_order/sync_order_bloc.dart';
-import 'package:flutter_pos/presentation/setting/pages/add_product_page.dart';
 
 import '../../../core/constants/colors.dart';
 import '../../../data/datasources/product_local_datasource.dart';

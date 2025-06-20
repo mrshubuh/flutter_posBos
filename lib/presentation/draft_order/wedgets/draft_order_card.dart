@@ -5,10 +5,8 @@ import 'package:flutter_pos/core/extensions/int_ext.dart';
 import 'package:flutter_pos/core/extensions/string_ext.dart';
 import 'package:flutter_pos/data/datasources/product_local_datasource.dart';
 import 'package:flutter_pos/presentation/home/bloc/checkout/checkout_bloc.dart';
-import 'package:flutter_pos/presentation/order/bloc/qris/models/order_model.dart';
 import 'package:flutter_pos/presentation/order/pages/order_page.dart';
 
-import '../../../core/assets/assets.gen.dart';
 import '../../../core/components/buttons.dart';
 import '../../../core/constants/colors.dart';
 import '../../order/bloc/qris/models/draft_order_model.dart';

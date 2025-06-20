@@ -6,7 +6,6 @@ import 'package:flutter_pos/core/extensions/build_context_ext.dart';
 import '../../../core/components/search_input.dart';
 import '../../../core/components/spaces.dart';
 
-import '../../history/widgets/history_transaction_card.dart';
 import '../../home/pages/dashboard_page.dart';
 import '../bloc/draft_order/draft_order_bloc.dart';
 import '../wedgets/draft_order_card.dart';

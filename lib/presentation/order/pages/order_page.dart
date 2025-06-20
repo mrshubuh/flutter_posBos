@@ -7,7 +7,6 @@ import 'package:flutter_pos/data/datasources/auth_local_datasource.dart';
 import 'package:flutter_pos/presentation/home/bloc/checkout/checkout_bloc.dart';
 import 'package:flutter_pos/presentation/home/models/order_item.dart';
 import 'package:flutter_pos/presentation/home/pages/dashboard_page.dart';
-import 'package:flutter_pos/presentation/setting/pages/add_product_page.dart';
 
 import '../../../core/assets/assets.gen.dart';
 import '../../../core/components/buttons.dart';
@@ -15,7 +14,6 @@ import '../../../core/components/menu_button.dart';
 import '../../../core/components/spaces.dart';
 import '../../../data/dataoutputs/cwb_print.dart';
 import '../bloc/order/order_bloc.dart';
-import '../bloc/qris/models/order_model.dart';
 import '../widgets/order_card.dart';
 import '../widgets/payment_cash_dialog.dart';
 import '../widgets/payment_qris_dialog.dart';

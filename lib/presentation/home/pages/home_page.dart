@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_pos/core/extensions/build_context_ext.dart';
-import 'package:flutter_pos/data/models/response/category_response_model.dart';
 import 'package:flutter_pos/presentation/draft_order/pages/draft_order_page.dart';
 import 'package:flutter_pos/presentation/home/bloc/product/product_bloc.dart';
-import 'package:flutter_pos/presentation/setting/pages/add_product_page.dart';
 import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
 
 import '../../../core/assets/assets.gen.dart';
@@ -156,7 +154,7 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ),
                           )
-                          .toList(),
+                          ,
                     ],
                   ),
                 );

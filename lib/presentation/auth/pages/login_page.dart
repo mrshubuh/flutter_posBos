@@ -3,10 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_pos/data/datasources/auth_local_datasource.dart';
 import 'package:flutter_pos/presentation/auth/bloc/login/login_bloc.dart';
 
-import '../../../core/assets/assets.gen.dart';
 import '../../../core/components/buttons.dart';
-import '../../../core/components/custom_text_field.dart';
-import '../../../core/components/spaces.dart';
 import '../../../core/constants/colors.dart';
 import '../../home/pages/dashboard_page.dart';
 

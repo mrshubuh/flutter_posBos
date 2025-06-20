@@ -20,9 +20,9 @@ import '../bloc/qris/models/order_model.dart';
 class PaymentQrisDialog extends StatefulWidget {
   final int price;
   const PaymentQrisDialog({
-    Key? key,
+    super.key,
     required this.price,
-  }) : super(key: key);
+  });
 
   @override
   State<PaymentQrisDialog> createState() => _PaymentQrisDialogState();

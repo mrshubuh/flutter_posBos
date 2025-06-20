@@ -3,11 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_pos/core/extensions/build_context_ext.dart';
 import 'package:flutter_pos/presentation/home/pages/dashboard_page.dart';
 
-import '../../../core/assets/assets.gen.dart';
 import '../../../core/components/spaces.dart';
 import '../../home/bloc/product/product_bloc.dart';
-import '../../home/models/product_category.dart';
-import '../../home/models/product_model.dart';
 import '../widgets/menu_product_item.dart';
 import 'add_product_page.dart';
 

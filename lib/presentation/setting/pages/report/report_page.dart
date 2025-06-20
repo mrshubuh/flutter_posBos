@@ -13,7 +13,6 @@ import 'package:flutter_pos/presentation/setting/bloc/report/summary/summary_blo
 import 'package:horizontal_data_table/horizontal_data_table.dart';
 
 import 'package:intl/intl.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 import '../../../../data/models/response/product_sales_report.dart';
 import 'utils/helper_pdf_service.dart';

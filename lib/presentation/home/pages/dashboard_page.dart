@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_pos/data/datasources/auth_local_datasource.dart';
 import 'package:flutter_pos/presentation/history/pages/history_page.dart';
-import 'package:flutter_pos/presentation/home/bloc/logout/logout_bloc.dart';
 import 'package:flutter_pos/presentation/home/pages/home_page.dart';
 import 'package:flutter_pos/presentation/order/pages/order_page.dart';
 import 'package:flutter_pos/presentation/setting/pages/setting_page.dart';
 
 import '../../../core/assets/assets.gen.dart';
 import '../../../core/constants/colors.dart';
-import '../../auth/pages/login_page.dart';
 import '../widgets/nav_item.dart';
 
 class DashboardPage extends StatefulWidget {
