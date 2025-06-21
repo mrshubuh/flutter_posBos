@@ -52,7 +52,7 @@ class _DashboardPageState extends State<DashboardPage> {
               blurRadius: 30.0,
               blurStyle: BlurStyle.outer,
               spreadRadius: 0,
-              color: AppColors.black.withOpacity(0.08),
+              color: AppColors.black.withValues(alpha: 0.08),
             ),
           ],
         ),

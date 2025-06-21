@@ -32,7 +32,7 @@ class DraftOrderCard extends StatelessWidget {
               blurRadius: 48.0,
               blurStyle: BlurStyle.outer,
               spreadRadius: 0,
-              color: AppColors.black.withOpacity(0.06),
+              color: AppColors.black.withValues(alpha: 0.06),
             ),
           ],
         ),

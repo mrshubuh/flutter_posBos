@@ -42,7 +42,7 @@ class ProductCard extends StatelessWidget {
                   padding: const EdgeInsets.all(12.0),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.disabled.withOpacity(0.4),
+                    color: AppColors.disabled.withValues(alpha: 0.4),
                   ),
                   child: ClipRRect(
                     borderRadius: const BorderRadius.all(Radius.circular(50.0)),
@@ -71,7 +71,7 @@ class ProductCard extends StatelessWidget {
                 ),
                 const SpaceHeight(8.0),
                 Text(
-                  data.category,
+                  data.categoryId.toString(),
                   style: const TextStyle(
                     color: AppColors.grey,
                     fontSize: 12,

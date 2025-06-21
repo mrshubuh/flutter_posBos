@@ -3,30 +3,43 @@ import 'package:image_picker/image_picker.dart';
 
 class ProductRequestModel {
   final String name;
+  final String? description;
   final int price;
   final int stock;
-  final String category;
   final int categoryId;
-  final int isBestSeller;
-  final XFile image;
+  final String sku;
+  final String unitOfMeasure;
+  final String? expiredDate;
+  final bool isBestSeller;
+  final bool isReady;
+  final XFile? image;
+
   ProductRequestModel({
     required this.name,
+    this.description,
     required this.price,
     required this.stock,
-    required this.category,
     required this.categoryId,
-    required this.isBestSeller,
-    required this.image,
+    this.sku = '',
+    this.unitOfMeasure = 'pcs',
+    this.expiredDate,
+    this.isBestSeller = false,
+    this.isReady = false,
+    this.image,
   });
 
-  Map<String, String> toMap() {
+  Map<String, dynamic> toMap() {
     return {
       'name': name,
+      'description': description ?? '',
       'price': price.toString(),
       'stock': stock.toString(),
-      'category': category,
       'category_id': categoryId.toString(),
-      'isBestSeller': isBestSeller.toString(),
+      'sku': sku,
+      'unit_of_measure': unitOfMeasure,
+      'expired_date': expiredDate,
+      'is_best_seller': isBestSeller ? '1' : '0',
+      'is_ready': isReady ? '1' : '0',
     };
   }
 }

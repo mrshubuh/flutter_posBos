@@ -30,8 +30,8 @@ class User {
   final int id;
   final String name;
   final String email;
-  final String phone;
-  final String roles;
+  final String? phone;
+  final dynamic roles;  // Can be int or String
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -39,7 +39,7 @@ class User {
     required this.id,
     required this.name,
     required this.email,
-    required this.phone,
+    this.phone,
     required this.roles,
     required this.createdAt,
     required this.updatedAt,
@@ -53,8 +53,8 @@ class User {
         id: json["id"],
         name: json["name"],
         email: json["email"],
-        phone: json["phone"] ?? '',
-        roles: json["roles"] ?? '',
+        phone: json["phone"],
+        roles: json["roles"],
         createdAt: DateTime.parse(json["created_at"]),
         updatedAt: DateTime.parse(json["updated_at"]),
       );

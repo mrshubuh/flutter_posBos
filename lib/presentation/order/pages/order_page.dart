@@ -12,6 +12,7 @@ import '../../../core/assets/assets.gen.dart';
 import '../../../core/components/buttons.dart';
 import '../../../core/components/menu_button.dart';
 import '../../../core/components/spaces.dart';
+import '../../../core/utils/snackbar_utils.dart';
 import '../../../data/dataoutputs/cwb_print.dart';
 import '../bloc/order/order_bloc.dart';
 import '../widgets/order_card.dart';
@@ -135,13 +136,10 @@ class _OrderPageState extends State<OrderPage> {
                                           const CheckoutEvent.started(),
                                         );
                                     //open bill success snack bar
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content:
-                                            Text('Save Draft Order Success'),
-                                        backgroundColor: AppColors.primary,
-                                      ),
-                                    );
+                                    SnackbarUtils(
+                                      text: 'Save Draft Order Success',
+                                      backgroundColor: AppColors.primary,
+                                    ).showSuccessSnackBar(context);
 
                                     context
                                         .pushReplacement(const DashboardPage());

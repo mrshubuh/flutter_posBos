@@ -61,18 +61,34 @@ class _ReportPageState extends State<ReportPage> {
     }
   }
 
-  Future<void> _selectEndDate(
-    BuildContext context,
-  ) async {
+  Future<void> _selectEndDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: selectedEndDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
+      firstDate: selectedStartDate,
+      lastDate: DateTime(2100, 12, 31),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.primary,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+            dialogBackgroundColor: Colors.white,
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null && picked != selectedEndDate) {
       setState(() {
         selectedEndDate = picked;
+        // Ensure end date is not before start date
+        if (selectedEndDate.isBefore(selectedStartDate)) {
+          selectedStartDate = selectedEndDate;
+        }
       });
     }
   }
@@ -184,7 +200,7 @@ class _ReportPageState extends State<ReportPage> {
                       color: AppColors.white,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.card.withOpacity(0.5),
+                          color: AppColors.card.withValues(alpha: 0.5),
                           spreadRadius: 5,
                           blurRadius: 7,
                           offset: const Offset(0, 3),
@@ -250,7 +266,7 @@ class _ReportPageState extends State<ReportPage> {
                     color: AppColors.white,
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.card.withOpacity(0.5),
+                        color: AppColors.card.withValues(alpha: 0.5),
                         spreadRadius: 5,
                         blurRadius: 7,
                         offset: const Offset(0, 3),

@@ -60,12 +60,17 @@ class OrderCard extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          data.product.name,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
+                        Flexible(
+                          child: Text(
+                            data.product.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
+                        const SpaceWidth(8.0),
                         Text(
                           data.product.price.currencyFormatRp,
                           style: const TextStyle(

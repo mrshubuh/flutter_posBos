@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_pos/data/datasources/auth_local_datasource.dart';
 
+import '../../../core/constants/colors.dart';
+import '../../../core/utils/snackbar_utils.dart';
+
 class SaveServerKeyPage extends StatefulWidget {
   const SaveServerKeyPage({super.key});
 
@@ -53,11 +56,10 @@ class _SaveServerKeyPageState extends State<SaveServerKeyPage> {
             onPressed: () {
               AuthLocalDatasource()
                   .saveMidtransServerKey(serverKeyController!.text);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Server Key saved'),
-                ),
-              );
+              SnackbarUtils(
+                text: 'Server Key saved',
+                backgroundColor: AppColors.primary,
+              ).showSuccessSnackBar(context);
               Navigator.pop(context);
             },
             child: const Text('Save'),

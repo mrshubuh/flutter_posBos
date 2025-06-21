@@ -1,9 +1,9 @@
-import 'dart:developer';
 import 'dart:io';
+import 'dart:developer';
 
-import 'package:open_file_plus/open_file_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/widgets.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class HelperPdfService {
   static Future<File> saveDocument({
@@ -25,14 +25,23 @@ class HelperPdfService {
     }
   }
 
-  static Future openFile(File file) async {
+  static Future<void> openFile(File file) async {
     try {
-      final url = file.path;
-      log("openFile: $url");
-      await OpenFile.open(url, type: "application/pdf");
-      log("awaitOpenFile.open : $url");
+      final url = Uri.file(file.path).toString();
+      log("Opening file: $url");
+      
+      if (await canLaunchUrlString(url)) {
+        await launchUrlString(
+          url,
+          mode: LaunchMode.externalApplication,
+        );
+        log("Successfully launched file: $url");
+      } else {
+        log("Could not launch URL: $url");
+      }
     } catch (e) {
-      log("Failed openFile: $e");
+      log("Failed to open file: $e");
+      rethrow;
     }
   }
 }

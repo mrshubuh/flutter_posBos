@@ -23,23 +23,48 @@ class ProductLocalDatasource {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2, // Increment version to trigger onUpgrade
       onCreate: _createDB,
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          // Drop old tables if they exist
+          await db.execute('DROP TABLE IF EXISTS $tableProducts');
+          await db.execute('DROP TABLE IF EXISTS orders');
+          await db.execute('DROP TABLE IF EXISTS categories');
+          await db.execute('DROP TABLE IF EXISTS order_items');
+          await db.execute('DROP TABLE IF EXISTS draft_orders');
+          await db.execute('DROP TABLE IF EXISTS draft_order_items');
+          
+          // Recreate all tables with new schema
+          await _createDB(db, newVersion);
+        }
+      },
     );
   }
 
   Future<void> _createDB(Database db, int version) async {
+    // Drop existing tables to avoid conflicts
+    await db.execute('DROP TABLE IF EXISTS $tableProducts');
+    await db.execute('DROP TABLE IF EXISTS orders');
+    await db.execute('DROP TABLE IF EXISTS categories');
+    await db.execute('DROP TABLE IF EXISTS order_items');
+    await db.execute('DROP TABLE IF EXISTS draft_orders');
+    await db.execute('DROP TABLE IF EXISTS draft_order_items');
     await db.execute('''
       CREATE TABLE $tableProducts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         product_id INTEGER,
         name TEXT,
+        description TEXT,
         price INTEGER,
         stock INTEGER,
-        image TEXT,
-        category TEXT,
         category_id INTEGER,
+        sku TEXT,
+        unit_of_measure TEXT,
+        expired_date TEXT,
+        image TEXT,
         is_best_seller INTEGER,
+        is_ready INTEGER,
         is_sync INTEGER DEFAULT 0
       )
     ''');
@@ -241,8 +266,15 @@ class ProductLocalDatasource {
   Future<Database> get database async {
     if (_database != null) return _database!;
 
-    _database = await _initDB('pos13.db');
-    return _database!;
+    try {
+      _database = await _initDB('pos14.db'); // Changed db name to force recreation
+      return _database!;
+    } catch (e) {
+      // If there's an error, delete the database and try again
+      await deleteDatabase('${await getDatabasesPath()}pos14.db');
+      _database = await _initDB('pos14.db');
+      return _database!;
+    }
   }
 
   //remove all data product
@@ -253,37 +285,111 @@ class ProductLocalDatasource {
 
   //insert data product from list product
   Future<void> insertAllProduct(List<Product> products) async {
-    final db = await instance.database;
-    for (var product in products) {
-      await db.insert(tableProducts, product.toLocalMap());
+    try {
+      final db = await instance.database;
+      final batch = db.batch();
+      
+      for (var product in products) {
+        final map = product.toLocalMap();
+        // Ensure all required fields are present
+        map['product_id'] = product.id ?? 0;
+        map['is_best_seller'] = product.isBestSeller ? 1 : 0;
+        map['is_ready'] = product.isReady ? 1 : 0;
+        
+        batch.insert(tableProducts, map);
+      }
+      
+      await batch.commit(noResult: true);
+    } catch (e) {
+      // Handle database schema changes by recreating the table
+      await _database?.close();
+      _database = null;
+      final db = await instance.database;
+      final batch = db.batch();
+      
+      for (var product in products) {
+        final map = product.toLocalMap();
+        map['product_id'] = product.id ?? 0;
+        map['is_best_seller'] = product.isBestSeller ? 1 : 0;
+        map['is_ready'] = product.isReady ? 1 : 0;
+        
+        batch.insert(tableProducts, map);
+      }
+      
+      await batch.commit(noResult: true);
     }
   }
 
-  //isert data product
+  //insert data product
   Future<Product> insertProduct(Product product) async {
-    final db = await instance.database;
-    int id = await db.insert(tableProducts, product.toMap());
-    return product.copyWith(id: id);
+    try {
+      final db = await instance.database;
+      final map = product.toLocalMap();
+      // Ensure all required fields are present
+      map['product_id'] = product.id ?? 0;
+      map['is_best_seller'] = product.isBestSeller ? 1 : 0;
+      map['is_ready'] = product.isReady ? 1 : 0;
+      
+      final id = await db.insert(tableProducts, map);
+      return product.copyWith(id: id);
+    } catch (e) {
+      // Handle database schema changes by recreating the table
+      await _database?.close();
+      _database = null;
+      final db = await instance.database;
+      final map = product.toLocalMap();
+      map['product_id'] = product.id ?? 0;
+      map['is_best_seller'] = product.isBestSeller ? 1 : 0;
+      map['is_ready'] = product.isReady ? 1 : 0;
+      
+      final id = await db.insert(tableProducts, map);
+      return product.copyWith(id: id);
+    }
   }
 
   //get all data product
   Future<List<Product>> getAllProduct() async {
-    final db = await instance.database;
-    final result = await db.query(tableProducts);
+    try {
+      final db = await instance.database;
+      final result = await db.query(tableProducts);
 
-    return result.map((e) => Product.fromMap(e)).toList();
+      return result.map((e) => Product.fromMap(e)).toList();
+    } catch (e) {
+      // Handle database schema changes by recreating the table
+      await _database?.close();
+      _database = null;
+      final db = await instance.database;
+      final result = await db.query(tableProducts);
+      return result.map((e) => Product.fromMap(e)).toList();
+    }
   }
 
   //get product by id
   Future<Product?> getProductById(int id) async {
-    final db = await instance.database;
-    final result =
-        await db.query(tableProducts, where: 'product_id = ?', whereArgs: [id]);
+    try {
+      final db = await instance.database;
+      final result = await db.query(
+        tableProducts, 
+        where: 'product_id = ?', 
+        whereArgs: [id],
+      );
 
-    if (result.isEmpty) {
-      return null;
+      if (result.isEmpty) {
+        return null;
+      }
+
+      return Product.fromMap(result.first);
+    } catch (e) {
+      // Handle database schema changes by recreating the table
+      await _database?.close();
+      _database = null;
+      final db = await instance.database;
+      final result = await db.query(
+        tableProducts, 
+        where: 'product_id = ?', 
+        whereArgs: [id],
+      );
+      return result.isEmpty ? null : Product.fromMap(result.first);
     }
-
-    return Product.fromMap(result.first);
   }
 }

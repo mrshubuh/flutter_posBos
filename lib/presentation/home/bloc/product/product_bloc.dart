@@ -45,7 +45,8 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       final newProducts = event.category == 'all'
           ? products
           : products
-              .where((element) => element.category == event.category)
+              .where(
+                  (element) => element.categoryId.toString() == event.category)
               .toList();
 
       emit(ProductState.success(newProducts));
@@ -55,11 +56,15 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       emit(const ProductState.loading());
       final requestData = ProductRequestModel(
         name: event.product.name,
+        description: event.product.description,
         price: event.product.price,
         stock: event.product.stock,
-        category: event.product.category,
         categoryId: event.product.categoryId,
-        isBestSeller: event.product.isBestSeller ? 1 : 0,
+        sku: event.product.sku,
+        unitOfMeasure: event.product.unitOfMeasure,
+        expiredDate: event.product.expiredDate?.toIso8601String(),
+        isBestSeller: event.product.isBestSeller,
+        isReady: event.product.isReady,
         image: event.image,
       );
       final response = await _productRemoteDatasource.addProduct(requestData);
@@ -71,8 +76,6 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
           emit(ProductState.success(products));
         },
       );
-
-      emit(ProductState.success(products));
     });
 
     on<_SearchProduct>((event, emit) async {

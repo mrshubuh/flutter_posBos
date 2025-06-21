@@ -1,4 +1,6 @@
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_pos/core/extensions/string_ext.dart';
@@ -10,6 +12,7 @@ import '../../../core/components/custom_dropdown.dart';
 import '../../../core/components/custom_text_field.dart';
 import '../../../core/components/image_picker_widget.dart';
 import '../../../core/components/spaces.dart';
+import '../../../core/utils/snackbar_utils.dart';
 import '../../../data/models/response/category_response_model.dart';
 import '../../../data/models/response/product_response_model.dart';
 import '../../home/bloc/category/category_bloc.dart';
@@ -29,7 +32,7 @@ class _AddProductPageState extends State<AddProductPage> {
 
   Category? category;
 
-  XFile? imageFile;
+  File? imageFile;
 
   bool isBestSeller = false;
 
@@ -92,10 +95,9 @@ class _AddProductPageState extends State<AddProductPage> {
           ImagePickerWidget(
             label: 'Photo',
             onChanged: (file) {
-              if (file == null) {
-                return;
-              }
-              imageFile = file;
+              setState(() {
+                imageFile = file;
+              });
             },
           ),
           const SpaceHeight(16.0),
@@ -172,21 +174,35 @@ class _AddProductPageState extends State<AddProductPage> {
                     }, success: (_) {
                       return Button.filled(
                         onPressed: () {
+                          if (imageFile == null) {
+                            SnackbarUtils(
+                              text: 'Please select an image',
+                              backgroundColor: Colors.red,
+                            ).showErrorSnackBar(context);
+                            return;
+                          }
+                          
                           final String name = nameController!.text;
                           final int price =
                               priceController!.text.toIntegerFromText;
                           final int stock =
                               stockController!.text.toIntegerFromText;
+                              
                           final Product product = Product(
-                              name: name,
-                              price: price,
-                              stock: stock,
-                              category: category!.name,
-                              categoryId: category!.id,
-                              isBestSeller: isBestSeller,
-                              image: imageFile!.path);
+                            name: name,
+                            price: price,
+                            stock: stock,
+                            sku: '',
+                            unitOfMeasure: 'pcs',
+                            expiredDate: null,
+                            isBestSeller: isBestSeller,
+                            categoryId: category?.id ?? 1, // Provide a default category ID if null
+                            image: imageFile!.path,
+                          );
+                          
                           context.read<ProductBloc>().add(
-                              ProductEvent.addProduct(product, imageFile!));
+                            ProductEvent.addProduct(product, XFile(imageFile!.path)),
+                          );
                         },
                         label: 'Simpan',
                       );

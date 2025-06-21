@@ -6,6 +6,7 @@ import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
 
 import '../../../core/components/spaces.dart';
 import '../../../core/constants/colors.dart';
+import '../../../core/utils/snackbar_utils.dart';
 import '../../../data/datasources/auth_local_datasource.dart';
 import '../widgets/menu_printer_button.dart';
 import '../widgets/menu_printer_content.dart';
@@ -94,12 +95,10 @@ class _ManagePrinterPageState extends State<ManagePrinterPage> {
 
     connected = true;
     AuthLocalDatasource().savePrinter(mac);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Printer connected with Name $mac'),
-        backgroundColor: AppColors.primary,
-      ),
-    );
+    SnackbarUtils(
+      text: 'Printer connected with Name $mac',
+      backgroundColor: AppColors.primary,
+    ).showSuccessSnackBar(context);
   }
 
   Future<void> disconnect() async {

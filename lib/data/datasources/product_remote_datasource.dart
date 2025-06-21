@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_pos/core/constants/variables.dart';
 import 'package:flutter_pos/data/models/request/product_request_model.dart';
 import 'package:flutter_pos/data/models/response/add_product_response_model.dart';
@@ -27,25 +28,41 @@ class ProductRemoteDatasource {
 
   Future<Either<String, AddProductResponseModel>> addProduct(
       ProductRequestModel productRequestModel) async {
-    final authData = await AuthLocalDatasource().getAuthData();
-    final Map<String, String> headers = {
-      'Authorization': 'Bearer ${authData.token}',
-    };
-    var request = http.MultipartRequest(
-        'POST', Uri.parse('${Variables.baseUrl}/api/products'));
-    request.fields.addAll(productRequestModel.toMap());
-    request.files.add(await http.MultipartFile.fromPath(
-        'image', productRequestModel.image.path));
-    request.headers.addAll(headers);
+    try {
+      final authData = await AuthLocalDatasource().getAuthData();
+      final Map<String, String> headers = {
+        'Authorization': 'Bearer ${authData.token}',
+      };
+      
+      var request = http.MultipartRequest(
+          'POST', Uri.parse('${Variables.baseUrl}/api/products'));
+          
+      // Convert all values to String and add to fields
+      final fields = productRequestModel.toMap();
+      fields.forEach((key, value) {
+        if (value != null) {
+          request.fields[key] = value.toString();
+        }
+      });
+      
+      // Add image if provided
+      if (productRequestModel.image != null) {
+        request.files.add(await http.MultipartFile.fromPath(
+            'image', productRequestModel.image!.path));
+      }
+      
+      request.headers.addAll(headers);
 
-    http.StreamedResponse response = await request.send();
+      final response = await request.send();
+      final String body = await response.stream.bytesToString();
 
-    final String body = await response.stream.bytesToString();
-
-    if (response.statusCode == 201) {
-      return right(AddProductResponseModel.fromJson(body));
-    } else {
-      return left(body);
+      if (response.statusCode == 201) {
+        return right(AddProductResponseModel.fromJson(body));
+      } else {
+        return left(body);
+      }
+    } catch (e) {
+      return left(e.toString());
     }
   }
 
@@ -53,7 +70,7 @@ class ProductRemoteDatasource {
   Future<Either<String, CategoryResponseModel>> getCategories() async {
     final authData = await AuthLocalDatasource().getAuthData();
     final response = await http.get(
-      Uri.parse('${Variables.baseUrl}/api/list-categories'),
+      Uri.parse('${Variables.baseUrl}/api/categories'),
       headers: {
         'Authorization': 'Bearer ${authData.token}',
         'Accept': 'application/json',
@@ -61,6 +78,7 @@ class ProductRemoteDatasource {
     );
 
     if (response.statusCode == 200) {
+      debugPrint(response.body);
       return right(CategoryResponseModel.fromJson(response.body));
     } else {
       return left(response.body);

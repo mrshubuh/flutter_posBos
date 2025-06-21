@@ -50,7 +50,7 @@ class MenuProductItem extends StatelessWidget {
                 ),
                 const SpaceHeight(5.0),
                 Text(
-                  data.category,
+                  data.categoryId.toString(),
                   style: const TextStyle(
                     fontSize: 12,
                     color: Colors.grey,
@@ -107,7 +107,7 @@ class MenuProductItem extends StatelessWidget {
                                       ),
                                       const SpaceHeight(10.0),
                                       Text(
-                                        data.category,
+                                        data.categoryId.toString(),
                                         style: const TextStyle(
                                           fontSize: 12,
                                           color: Colors.grey,
@@ -147,7 +147,7 @@ class MenuProductItem extends StatelessWidget {
                           //route to edit page
                           Navigator.push(context,
                               MaterialPageRoute(builder: (context) {
-                            return const EditProductPage();
+                            return EditProductPage(product: data);
                           }));
                         },
                         label: 'Edit',

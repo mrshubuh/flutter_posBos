@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_pos/core/extensions/build_context_ext.dart';
+import 'package:flutter_pos/core/utils/snackbar_utils.dart';
 
 import '../../../core/components/spaces.dart';
 
@@ -26,13 +27,10 @@ class _HistoryPageState extends State<HistoryPage> {
 
   Future<void> saveAsPdf() async {
     //print all history to pdf
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Saving as PDF...'),
-        backgroundColor: AppColors.primary,
-        duration: Duration(seconds: 3),
-      ),
-    );
+    SnackbarUtils(
+      text: 'Saving as PDF...',
+      backgroundColor: AppColors.primary,
+    ).showSuccessSnackBar(context);
   }
 
   @override

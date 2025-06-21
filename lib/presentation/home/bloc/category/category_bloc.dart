@@ -21,13 +21,14 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
       final result = await productRemoteDatasource.getCategories();
       result.fold(
         (l) => emit(_Error(l)),
-        (r) => emit(_Loaded(r.data)),
+        (r) => emit(_Loaded(r.data ?? [])),
       );
     });
 
     on<_GetCategoriesLocal>((event, emit) async {
       emit(const _Loading());
-      categories = await ProductLocalDatasource.instance.getAllCategories();
+      final localCategories = await ProductLocalDatasource.instance.getAllCategories();
+      categories = localCategories ?? [];
       emit(_LoadedLocal(categories));
     });
   }

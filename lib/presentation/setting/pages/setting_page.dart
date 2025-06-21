@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_pos/core/extensions/build_context_ext.dart';
+import 'package:flutter_pos/core/utils/snackbar_utils.dart';
 import 'package:flutter_pos/data/datasources/auth_local_datasource.dart';
 import 'package:flutter_pos/presentation/auth/pages/login_page.dart';
 import 'package:flutter_pos/presentation/home/pages/dashboard_page.dart';
@@ -54,7 +55,8 @@ class _SettingPageState extends State<SettingPage> {
                       child: MenuButton(
                         iconPath: Assets.images.manageProduct.path,
                         label: 'Setting Product',
-                        onPressed: () => context.push(const ManageProductPage()),
+                        onPressed: () =>
+                            context.push(const ManageProductPage()),
                         isImage: true,
                       ),
                     ),
@@ -81,7 +83,8 @@ class _SettingPageState extends State<SettingPage> {
                       child: MenuButton(
                         iconPath: Assets.images.manageQr.path,
                         label: 'QRIS Server Key',
-                        onPressed: () => context.push(const SaveServerKeyPage()),
+                        onPressed: () =>
+                            context.push(const SaveServerKeyPage()),
                         isImage: true,
                       ),
                     ),
@@ -125,14 +128,12 @@ class _SettingPageState extends State<SettingPage> {
                               context.read<CloseCashierBloc>().add(
                                     const CloseCashierEvent.closeCashier(),
                                   );
-          
+
                               context.pushReplacement(const LoginPage());
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  backgroundColor: Colors.green,
-                                  content: Text('Close Kasir Success'),
-                                ),
-                              );
+                              SnackbarUtils(
+                                text: 'Close Kasir Success',
+                                backgroundColor: Colors.green,
+                              ).showSuccessSnackBar(context);
                             },
                           );
                         },
@@ -198,7 +199,9 @@ class _SettingPageState extends State<SettingPage> {
                 builder: (context, state) {
                   return ElevatedButton(
                     onPressed: () {
-                      context.read<LogoutBloc>().add(const LogoutEvent.logout());
+                      context
+                          .read<LogoutBloc>()
+                          .add(const LogoutEvent.logout());
                     },
                     child: const Text('Logout'),
                   );

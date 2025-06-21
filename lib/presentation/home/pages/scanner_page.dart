@@ -196,7 +196,7 @@ class _ScannerPageState extends State<ScannerPage> with WidgetsBindingObserver {
             alignment: Alignment.bottomCenter,
             child: Container(
               padding: const EdgeInsets.all(16.0),
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
               child: _buildBarcode(_barcode),
             ),
           ),

@@ -38,25 +38,14 @@ class _HomePageState extends State<HomePage> {
     super.initState();
   }
 
-  void onCategoryTap(int index) {
+  void onCategoryTap(int index, {String? categoryName}) {
     searchController.clear();
     currentIndex = index;
-    // String category = 'all';
-    // switch (index) {
-    //   case 0:
-    //     category = 'all';
-    //     break;
-    //   case 1:
-    //     category = 'drink';
-    //     break;
-    //   case 2:
-    //     category = 'food';
-    //     break;
-    //   case 3:
-    //     category = 'snack';
-    //     break;
-    // }
-    // context.read<ProductBloc>().add(ProductEvent.fetchByCategory(category));
+    if (index == 0) {
+      context.read<ProductBloc>().add(const ProductEvent.fetchLocal());
+    } else if (categoryName != null) {
+      context.read<ProductBloc>().add(ProductEvent.fetchByCategory(categoryName));
+    }
   }
 
   @override
@@ -122,39 +111,34 @@ class _HomePageState extends State<HomePage> {
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     children: [
+                      // All Categories Button
                       SizedBox(
                         height: 80,
                         width: 90,
                         child: MenuButton(
-                            iconPath: Assets.icons.allCategories.path,
-                            label: 'All',
-                            isActive: currentIndex == 0,
-                            onPressed: () {
-                              onCategoryTap(0);
-                              context
-                                  .read<ProductBloc>()
-                                  .add(const ProductEvent.fetchLocal());
-                            }),
+                          iconPath: Assets.icons.allCategories.path,
+                          label: 'All',
+                          isActive: currentIndex == 0,
+                          onPressed: () => onCategoryTap(0),
+                        ),
                       ),
                       const SpaceWidth(10.0),
-                      ...categories
-                          .map(
-                            (e) => SizedBox(
-                              height: 80,
-                              width: 90,
-                              child: MenuButton(
-                                iconPath: Assets.icons.allCategories.path,
-                                label: e.name,
-                                isActive: currentIndex == e.id,
-                                onPressed: () {
-                                  onCategoryTap(e.id);
-                                  context.read<ProductBloc>().add(
-                                      ProductEvent.fetchByCategory(e.name));
-                                },
-                              ),
+                      // Dynamic Category Buttons
+                      ...categories.map(
+                        (category) => Padding(
+                          padding: const EdgeInsets.only(right: 10.0),
+                          child: SizedBox(
+                            height: 80,
+                            width: 90,
+                            child: MenuButton(
+                              iconPath: Assets.icons.allCategories.path,
+                              label: category.name,
+                              isActive: currentIndex == category.id,
+                              onPressed: () => onCategoryTap(category.id, categoryName: category.name),
                             ),
-                          )
-                          ,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 );

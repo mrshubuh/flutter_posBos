@@ -38,10 +38,13 @@ class Product {
   final String? description;
   final int price;
   final int stock;
-  final String category;
   final int categoryId;
+  final String sku;
+  final String unitOfMeasure;
+  final DateTime? expiredDate;
   final String image;
   final bool isBestSeller;
+  final bool isReady;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -52,10 +55,13 @@ class Product {
     this.description,
     required this.price,
     required this.stock,
-    required this.category,
     required this.categoryId,
+    required this.sku,
+    required this.unitOfMeasure,
+    this.expiredDate,
     required this.image,
     this.isBestSeller = false,
+    this.isReady = false,
     this.createdAt,
     this.updatedAt,
   });
@@ -69,16 +75,19 @@ class Product {
         productId: json["product_id"],
         name: json["name"] ?? '',
         description: json["description"] ?? '',
-        price: json["price"] ?? 0,
+        price: json["price"] is String ? int.tryParse(json["price"].replaceAll(RegExp(r'[^0-9]'), '')) ?? 0 : (json["price"] ?? 0),
         stock: json["stock"] ?? 0,
-        category: json["category"] ?? '',
         categoryId: json["category_id"] != null
             ? (json["category_id"] is String
                 ? int.tryParse(json["category_id"]) ?? 0
                 : json["category_id"])
             : 0,
-        image: json["image"] ?? '',
-        isBestSeller: json["is_best_seller"] == 1 ? true : false,
+        sku: json["sku"] ?? '',
+        unitOfMeasure: json["unit_of_measure"] ?? 'pcs',
+        expiredDate: json["expired_date"] != null ? DateTime.tryParse(json["expired_date"]) : null,
+        image: json["image"] ?? 'products/default-product.jpg',
+        isBestSeller: json["is_best_seller"] == true || json["is_best_seller"] == 1,
+        isReady: json["isReady"] ?? false,
 
         // createdAt: DateTime.parse(json["created_at"]),
         // updatedAt: DateTime.parse(json["updated_at"]),
@@ -95,20 +104,26 @@ class Product {
         "name": name,
         "price": price,
         "stock": stock,
-        "category": category,
         "category_id": categoryId,
+        "sku": sku,
+        "unit_of_measure": unitOfMeasure,
+        "expired_date": expiredDate?.toIso8601String(),
         "image": image,
-        "is_best_seller": isBestSeller ? 1 : 0,
+        "is_best_seller": isBestSeller,
+        "isReady": isReady,
         "product_id": productId,
       };
   Map<String, dynamic> toLocalMap() => {
         "name": name,
         "price": price,
         "stock": stock,
-        "category": category,
         "category_id": categoryId,
+        "sku": sku,
+        "unit_of_measure": unitOfMeasure,
+        "expired_date": expiredDate?.toIso8601String(),
         "image": image,
         "is_best_seller": isBestSeller ? 1 : 0,
+        "is_ready": isReady ? 1 : 0,
         "product_id": id,
       };
 
@@ -119,10 +134,13 @@ class Product {
     String? description,
     int? price,
     int? stock,
-    String? category,
     int? categoryId,
+    String? sku,
+    String? unitOfMeasure,
+    DateTime? expiredDate,
     String? image,
     bool? isBestSeller,
+    bool? isReady,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -133,10 +151,13 @@ class Product {
       description: description ?? this.description,
       price: price ?? this.price,
       stock: stock ?? this.stock,
-      category: category ?? this.category,
       categoryId: categoryId ?? this.categoryId,
+      sku: sku ?? this.sku,
+      unitOfMeasure: unitOfMeasure ?? this.unitOfMeasure,
+      expiredDate: expiredDate ?? this.expiredDate,
       image: image ?? this.image,
       isBestSeller: isBestSeller ?? this.isBestSeller,
+      isReady: isReady ?? this.isReady,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -152,9 +173,13 @@ class Product {
         other.description == description &&
         other.price == price &&
         other.stock == stock &&
-        other.category == category &&
+        other.categoryId == categoryId &&
+        other.sku == sku &&
+        other.unitOfMeasure == unitOfMeasure &&
+        other.expiredDate == expiredDate &&
         other.image == image &&
         other.isBestSeller == isBestSeller &&
+        other.isReady == isReady &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt;
   }
@@ -166,9 +191,13 @@ class Product {
         description.hashCode ^
         price.hashCode ^
         stock.hashCode ^
-        category.hashCode ^
+        categoryId.hashCode ^
+        sku.hashCode ^
+        unitOfMeasure.hashCode ^
+        expiredDate.hashCode ^
         image.hashCode ^
         isBestSeller.hashCode ^
+        isReady.hashCode ^
         createdAt.hashCode ^
         updatedAt.hashCode;
   }

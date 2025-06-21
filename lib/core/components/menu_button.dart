@@ -41,7 +41,7 @@ class MenuButton extends StatelessWidget {
               blurRadius: 20.0,
               blurStyle: BlurStyle.outer,
               spreadRadius: 0,
-              color: AppColors.black.withOpacity(0.1),
+              color: AppColors.black.withValues(alpha: 0.1),
             ),
           ],
         ),
@@ -64,6 +64,9 @@ class MenuButton extends StatelessWidget {
             const SpaceHeight(8.0),
             Text(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: isActive ? AppColors.white : AppColors.primary,
                 fontSize: 12,

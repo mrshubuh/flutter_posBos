@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_pos/core/assets/assets.gen.dart';
-import 'package:flutter_pos/core/constants/colors.dart';
 import 'package:flutter_pos/data/datasources/auth_local_datasource.dart';
 import 'package:flutter_pos/presentation/auth/pages/login_page.dart';
 import 'package:flutter_pos/presentation/home/pages/dashboard_page.dart';
@@ -67,11 +65,11 @@ class _SplashScreenPagesState extends State<SplashScreenPages>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Assets.icons.dashboard.svg(
-                  width: 120,
-                  height: 120,
-                  // color: Colors.blueAccent,
-                  color: AppColors.primary
+                Image.asset(
+                  'assets/logo/logor.png',
+                  width: 200,
+                  height: 200,
+                  fit: BoxFit.contain,
                 ),
                 const SizedBox(height: 30),
                 const Text(

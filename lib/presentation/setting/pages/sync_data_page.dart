@@ -6,6 +6,7 @@ import 'package:flutter_pos/presentation/home/bloc/product/product_bloc.dart';
 import 'package:flutter_pos/presentation/setting/bloc/sync_order/sync_order_bloc.dart';
 
 import '../../../core/constants/colors.dart';
+import '../../../core/utils/snackbar_utils.dart';
 import '../../../data/datasources/product_local_datasource.dart';
 import '../../home/bloc/category/category_bloc.dart';
 
@@ -42,11 +43,10 @@ class _SyncDataPageState extends State<SyncDataPage> {
                   await ProductLocalDatasource.instance.removeAllProduct();
                   await ProductLocalDatasource.instance
                       .insertAllProduct(_.products.toList());
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      backgroundColor: AppColors.primary,
-                      content: Text(
-                        'Sync data product success',
-                      )));
+                  SnackbarUtils(
+                    text: 'Sync data product success',
+                    backgroundColor: AppColors.primary,
+                  ).showSuccessSnackBar(context);
                 },
               );
             },
@@ -70,43 +70,6 @@ class _SyncDataPageState extends State<SyncDataPage> {
             },
           ),
           const SpaceHeight(20),
-          //button sync data order
-          BlocConsumer<SyncOrderBloc, SyncOrderState>(
-            listener: (context, state) {
-              state.maybeMap(
-                orElse: () {},
-                success: (_) async {
-                  // await ProductLocalDatasource.instance.removeAllProduct();
-                  // await ProductLocalDatasource.instance
-                  //     .insertAllProduct(_.products.toList());
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      backgroundColor: AppColors.primary,
-                      content: Text(
-                        'Sync data orders success',
-                      )));
-                },
-              );
-            },
-            builder: (context, state) {
-              return state.maybeWhen(
-                orElse: () {
-                  return ElevatedButton(
-                      onPressed: () {
-                        context
-                            .read<SyncOrderBloc>()
-                            .add(const SyncOrderEvent.sendOrder());
-                      },
-                      child: const Text('Sync Data Orders'));
-                },
-                loading: () {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                },
-              );
-            },
-          ),
-          const SpaceHeight(20),
           //button sync categories
           BlocConsumer<CategoryBloc, CategoryState>(
             listener: (context, state) {
@@ -120,11 +83,10 @@ class _SyncDataPageState extends State<SyncDataPage> {
                       .read<CategoryBloc>()
                       .add(const CategoryEvent.getCategoriesLocal());
                   context.pop();
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      backgroundColor: AppColors.primary,
-                      content: Text(
-                        'Sync data categories success',
-                      )));
+                  SnackbarUtils(
+                    text: 'Sync data categories success',
+                    backgroundColor: AppColors.primary,
+                  ).showSuccessSnackBar(context);
                 },
               );
             },
@@ -138,6 +100,42 @@ class _SyncDataPageState extends State<SyncDataPage> {
                             .add(const CategoryEvent.getCategories());
                       },
                       child: const Text('Sync Data Categories'));
+                },
+                loading: () {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                },
+              );
+            },
+          ),
+          const SpaceHeight(20),
+          //button sync data order
+          BlocConsumer<SyncOrderBloc, SyncOrderState>(
+            listener: (context, state) {
+              state.maybeMap(
+                orElse: () {},
+                success: (_) async {
+                  // await ProductLocalDatasource.instance.removeAllProduct();
+                  // await ProductLocalDatasource.instance
+                  //     .insertAllProduct(_.products.toList());
+                  SnackbarUtils(
+                    text: 'Sync data orders success',
+                    backgroundColor: AppColors.primary,
+                  ).showSuccessSnackBar(context);
+                },
+              );
+            },
+            builder: (context, state) {
+              return state.maybeWhen(
+                orElse: () {
+                  return ElevatedButton(
+                      onPressed: () {
+                        context
+                            .read<SyncOrderBloc>()
+                            .add(const SyncOrderEvent.sendOrder());
+                      },
+                      child: const Text('Sync Data Orders'));
                 },
                 loading: () {
                   return const Center(

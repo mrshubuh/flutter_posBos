@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_pos/core/utils/snackbar_utils.dart';
 import 'package:flutter_pos/data/datasources/auth_local_datasource.dart';
 import 'package:flutter_pos/presentation/auth/bloc/login/login_bloc.dart';
 
@@ -37,15 +38,21 @@ class _LoginPageState extends State<LoginPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(height: 80.0),
-                const Text(
-                  "POS",
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
+                Image.asset(
+                  'assets/logo/logor.png',
+                  width: 200,
+                  height: 200,
+                  fit: BoxFit.contain,
                 ),
-                const SizedBox(height: 8.0),
+                // const Text(
+                //   "POS",
+                //   style: TextStyle(
+                //     fontSize: 32,
+                //     fontWeight: FontWeight.bold,
+                //     color: Colors.black,
+                //   ),
+                // ),
+                // const SizedBox(height: 8.0),
                 const Text(
                   'Login to your account',
                   style: TextStyle(
@@ -67,7 +74,7 @@ class _LoginPageState extends State<LoginPage> {
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide:
-                          BorderSide(color: Colors.grey.withOpacity(0.5)),
+                          BorderSide(color: Colors.grey.withValues(alpha: 0.5)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -96,7 +103,7 @@ class _LoginPageState extends State<LoginPage> {
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide:
-                          BorderSide(color: Colors.grey.withOpacity(0.5)),
+                          BorderSide(color: Colors.grey.withValues(alpha: 0.5)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -122,12 +129,10 @@ class _LoginPageState extends State<LoginPage> {
                         );
                       },
                       error: (message) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(message),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
+                        SnackbarUtils(
+                          text: message,
+                          backgroundColor: Colors.red,
+                        ).showErrorSnackBar(context);
                       },
                     );
                   },
