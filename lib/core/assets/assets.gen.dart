@@ -162,8 +162,11 @@ class $AssetsLogoGen {
   /// File path: assets/logo/logo.png
   AssetGenImage get logo => const AssetGenImage('assets/logo/logo.png');
 
+  /// File path: assets/logo/logor.png
+  AssetGenImage get logor => const AssetGenImage('assets/logo/logor.png');
+
   /// List of all assets
-  List<AssetGenImage> get values => [logo];
+  List<AssetGenImage> get values => [logo, logor];
 }
 
 class Assets {

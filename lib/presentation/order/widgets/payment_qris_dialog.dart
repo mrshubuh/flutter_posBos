@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:flutter_pos/core/extensions/build_context_ext.dart';
 import 'package:flutter_pos/core/extensions/int_ext.dart';
@@ -73,8 +74,17 @@ class _PaymentQrisDialogState extends State<PaymentQrisDialog> {
                 return const Center(
                   child: CircularProgressIndicator(),
                 );
-              }, success: (data, qty, total, paymentMethod, nominal, idKasir,
-                  namaKasir, customerName) {
+              }, success: (products,
+                  totalQuantity,
+                  totalPrice,
+                  subTotal,
+                  discountPercentage,
+                  appliedDiscount,
+                  paymentMethod,
+                  nominalBayar,
+                  idKasir,
+                  namaKasir,
+                  customerName) {
                 return Container(
                   width: context.deviceWidth,
                   padding: const EdgeInsets.all(14.0),
@@ -102,10 +112,10 @@ class _PaymentQrisDialogState extends State<PaymentQrisDialog> {
                             timer?.cancel();
                             final orderModel = OrderModel(
                                 paymentMethod: paymentMethod,
-                                nominalBayar: total,
-                                orders: data,
-                                totalQuantity: qty,
-                                totalPrice: total,
+                                nominalBayar: nominalBayar,
+                                orders: products,
+                                totalQuantity: totalQuantity,
+                                totalPrice: totalPrice,
                                 idKasir: idKasir,
                                 namaKasir: namaKasir,
                                 transactionTime:
@@ -173,7 +183,7 @@ class _PaymentQrisDialogState extends State<PaymentQrisDialog> {
                       ),
                       const SpaceHeight(16),
                       Text(
-                        'Price: ${total.currencyFormatRp}',
+                        'Price: ${totalPrice.currencyFormatRp}',
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           fontSize: 16,
@@ -183,8 +193,8 @@ class _PaymentQrisDialogState extends State<PaymentQrisDialog> {
                       ElevatedButton(
                         onPressed: () async {
                           final bytes = await controller.capture();
-                          final listInt =
-                              await CwbPrint.instance.printQRIS(total, bytes!);
+                          final listInt = await CwbPrint.instance
+                              .printQRIS(totalPrice, bytes!);
                           CwbPrint.instance.printReceipt(listInt);
                         },
                         style: ElevatedButton.styleFrom(
@@ -195,6 +205,35 @@ class _PaymentQrisDialogState extends State<PaymentQrisDialog> {
                         ),
                         child: const Text(
                           'Print QRIS',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () async {
+                          final state = context.read<QrisBloc>().state;
+                          final qrisState = state.maybeWhen(
+                            orElse: () {},
+                            qrisResponse: (data) {
+                              return data;
+                            },
+                          );
+                          final url = qrisState?.actions?.first.url;
+                          if (url != null) {
+                            await launchUrl(Uri.parse(url),
+                                mode: LaunchMode.externalApplication);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                        ),
+                        child: const Text(
+                          'Bayar via Midtrans',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 16,

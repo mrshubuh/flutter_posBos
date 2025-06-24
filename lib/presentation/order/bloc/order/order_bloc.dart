@@ -1,54 +1,209 @@
-import 'package:bloc/bloc.dart';
-import 'package:flutter_pos/data/datasources/auth_local_datasource.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'dart:async';
 
-import '../../../home/models/order_item.dart';
+import 'package:bloc/bloc.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_pos/data/datasources/auth_local_datasource.dart';
+import 'package:flutter_pos/data/datasources/discount_remote_datasource.dart';
+import 'package:flutter_pos/data/datasources/order_local_datasource.dart';
+import 'package:flutter_pos/data/datasources/order_remote_datasource.dart';
+import 'package:flutter_pos/data/models/order_item_model.dart';
+import 'package:flutter_pos/data/models/response/discount_response_model.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'order_event.dart';
 part 'order_state.dart';
 part 'order_bloc.freezed.dart';
 
 class OrderBloc extends Bloc<OrderEvent, OrderState> {
-  OrderBloc() : super(const _Success([], 0, 0, '', 0, 0, '', '')) {
-    on<_AddPaymentMethod>((event, emit) async {
-      emit(const _Loading());
-      final userData = await AuthLocalDatasource().getAuthData();
-      emit(_Success(
+  // Data sources will be used in future implementations
+  @visibleForTesting
+  final OrderRemoteDatasource orderRemoteDatasource;
+  @visibleForTesting
+  final OrderLocalDatasource orderLocalDatasource;
+  @visibleForTesting
+  final DiscountRemoteDatasource discountRemoteDatasource;
+  final AuthLocalDatasource _authLocalDatasource;
+
+  OrderBloc({
+    required this.orderRemoteDatasource,
+    required this.orderLocalDatasource,
+    required this.discountRemoteDatasource,
+    required AuthLocalDatasource authLocalDatasource,
+  })  : _authLocalDatasource = authLocalDatasource,
+        super(const OrderState.initial()) {
+    on<OrderEvent>((event, emit) async {
+      if (event is _Started) {
+        await _onStarted(emit);
+      } else if (event is _AddPaymentMethod) {
+        await _onAddPaymentMethod(event, emit);
+      } else if (event is _AddNominalBayar) {
+        await _onAddNominalBayar(event, emit);
+      } else if (event is _SyncOfflineOrders) {
+        await _onSyncOfflineOrders(emit);
+      } else if (event is _ApplyAutoDiscount) {
+        await _onApplyAutoDiscount(event, emit);
+      } else if (event is _ApplyManualDiscount) {
+        await _onApplyManualDiscount(event, emit);
+      } else if (event is _UpdateSyncStatus) {
+        await _onUpdateSyncStatus(event, emit);
+      }
+    });
+  }
+
+  Future<void> _onStarted(Emitter<OrderState> emit) async {
+    emit(const OrderState.initial());
+  }
+
+  Future<void> _onAddPaymentMethod(
+      _AddPaymentMethod event, Emitter<OrderState> emit) async {
+    try {
+      final user = await _authLocalDatasource.getAuthData();
+      final totalQuantity =
+          event.orders.fold(0, (sum, item) => sum + item.quantity);
+      final subTotal = event.orders
+          .fold(0, (sum, item) => sum + (item.product.price * item.quantity));
+
+      emit(OrderState.success(
         event.orders,
-        event.orders.fold(
-            0, (previousValue, element) => previousValue + element.quantity),
-        event.orders.fold(
-            0,
-            (previousValue, element) =>
-                previousValue + (element.quantity * element.product.price)),
-        event.paymentMethod,
-        0,
-        userData.user.id,
-        userData.user.name,
-        event.customerName,
+        totalQuantity,
+        subTotal, // totalPrice
+        subTotal: subTotal,
+        discountPercentage: 0.0,
+        appliedDiscount: null,
+        paymentMethod: event.paymentMethod,
+        nominalBayar: 0,
+        idKasir: user.user.id ?? 0,
+        namaKasir: user.user.name ?? 'Kasir',
+        customerName: event.customerName,
       ));
-    });
+    } catch (e) {
+      emit(OrderState.error('Failed to add payment method: $e'));
+    }
+  }
 
-    on<_AddNominalBayar>((event, emit) {
-      var currentStates = state as _Success;
-      emit(const _Loading());
+  Future<void> _onAddNominalBayar(
+      _AddNominalBayar event, Emitter<OrderState> emit) async {
+    final state = this.state;
+    if (state is _Success) {
+      emit(state.copyWith(nominalBayar: event.nominal));
+    }
+  }
 
-      emit(_Success(
-        currentStates.products,
-        currentStates.totalQuantity,
-        currentStates.totalPrice,
-        currentStates.paymentMethod,
-        event.nominal,
-        currentStates.idKasir,
-        currentStates.namaKasir,
-        currentStates.customerName,
+  Future<void> _onSyncOfflineOrders(Emitter<OrderState> emit) async {
+    try {
+      emit(const OrderState.syncing());
+      // Sync offline orders with the server
+      // This is a placeholder - implement actual sync logic here
+      await Future.delayed(const Duration(seconds: 1)); // Simulate network delay
+      emit(const OrderState.initial());
+    } catch (e) {
+      emit(OrderState.error('Failed to sync offline orders: $e'));
+    }
+  }
+
+  Future<void> _onApplyAutoDiscount(
+      _ApplyAutoDiscount event, Emitter<OrderState> emit) async {
+    try {
+      final state = this.state;
+      if (state is! _Success) return;
+
+      final currentDay = DateTime.now().weekday;
+      if (!event.validDays.contains(currentDay)) return;
+
+      // Calculate new subtotal
+      final newSubTotal = state.products
+          .fold(0, (sum, item) => sum + (item.product.price * item.quantity));
+      final discountAmount = (newSubTotal * event.percentage / 100).round();
+      // Using the discounted price directly in the state update
+
+      // Create a temporary discount model
+      final discount = DiscountResponseModel(
+        id: 0, // Temporary ID for auto discount
+        name: 'Auto Discount ${event.percentage}%',
+        description: 'Auto applied discount',
+        value: event.percentage.toDouble(),
+        status: 'active',
+        expiredAt: DateTime.now().add(const Duration(days: 1)),
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        type: '',
+        minQuantity: 0,
+        maxQuantity: 0,
+        minAmount: 0,
+        applyTo: '',
+        customerType: '',
+        validDays: [],
+      );
+
+      emit(state.copyWith(
+        subTotal: newSubTotal,
+        totalPrice: newSubTotal - discountAmount,
+        discountPercentage: event.percentage.toDouble(),
+        appliedDiscount: discount,
+        paymentMethod: state.paymentMethod,
+        nominalBayar: state.nominalBayar,
+        idKasir: state.idKasir,
+        namaKasir: state.namaKasir,
+        customerName: state.customerName,
       ));
-    });
+    } catch (e) {
+      emit(OrderState.error('Failed to apply auto discount: $e'));
+    }
+  }
 
-    //started
-    on<_Started>((event, emit) {
-      emit(const _Loading());
-      emit(const _Success([], 0, 0, '', 0, 0, '', ''));
-    });
+  Future<void> _onApplyManualDiscount(
+      _ApplyManualDiscount event, Emitter<OrderState> emit) async {
+    try {
+      final state = this.state;
+      if (state is! _Success) return;
+
+      if (event.percentage < 0 || event.percentage > 100) {
+        emit(const OrderState.error('Invalid discount percentage'));
+        return;
+      }
+
+      // Calculate new subtotal
+      final newSubTotal = state.products
+          .fold(0, (sum, item) => sum + (item.product.price * item.quantity));
+      final discountAmount = (newSubTotal * event.percentage / 100).round();
+
+      // Create a temporary discount model for manual discount
+      final discount = DiscountResponseModel(
+        id: -1, // Special ID for manual discount
+        name: 'Manual Discount ${event.percentage}%',
+        description: 'Manually applied discount',
+        value: event.percentage.toDouble(),
+        status: 'active',
+        expiredAt: DateTime.now().add(const Duration(days: 1)),
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        type: '',
+        minQuantity: 0,
+        maxQuantity: 0,
+        minAmount: 0,
+        applyTo: '',
+        customerType: '',
+        validDays: [],
+      );
+
+      emit(state.copyWith(
+        subTotal: newSubTotal,
+        totalPrice: newSubTotal - discountAmount,
+        discountPercentage: event.percentage.toDouble(),
+        appliedDiscount: discount,
+        paymentMethod: state.paymentMethod,
+        nominalBayar: state.nominalBayar,
+        idKasir: state.idKasir,
+        namaKasir: state.namaKasir,
+        customerName: state.customerName,
+      ));
+    } catch (e) {
+      emit(OrderState.error('Failed to apply manual discount: $e'));
+    }
+  }
+
+  Future<void> _onUpdateSyncStatus(
+      _UpdateSyncStatus event, Emitter<OrderState> emit) async {
+    emit(OrderState.syncStatusUpdated(event.orderId, event.isSynced));
   }
 }

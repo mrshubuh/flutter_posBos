@@ -18,18 +18,46 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
   ) : super(const _Initial()) {
     on<_GetCategories>((event, emit) async {
       emit(const _Loading());
-      final result = await productRemoteDatasource.getCategories();
-      result.fold(
-        (l) => emit(_Error(l)),
-        (r) => emit(_Loaded(r.data ?? [])),
-      );
+      try {
+        final result = await productRemoteDatasource.getCategories();
+        await result.fold(
+          (l) async {
+            if (!emit.isDone) emit(_Error(l));
+          },
+          (r) async {
+            if (r.data != null && r.data!.isNotEmpty) {
+              // Save categories to local database
+              await ProductLocalDatasource.instance.insertAllCategories(r.data!);
+              categories = r.data!;
+              if (!emit.isDone) emit(_Loaded(categories));
+            } else {
+              // If no categories from API, try to load from local
+              final localCategories = await ProductLocalDatasource.instance.getAllCategories();
+              categories = localCategories;
+              if (!emit.isDone) emit(_LoadedLocal(categories));
+            }
+          },
+        );
+      } catch (e) {
+        if (!emit.isDone) emit(_Error(e.toString()));
+      }
     });
 
     on<_GetCategoriesLocal>((event, emit) async {
       emit(const _Loading());
-      final localCategories = await ProductLocalDatasource.instance.getAllCategories();
-      categories = localCategories ?? [];
-      emit(_LoadedLocal(categories));
+      try {
+        final localCategories = await ProductLocalDatasource.instance.getAllCategories();
+        if (localCategories.isNotEmpty) {
+          categories = localCategories;
+          if (!emit.isDone) emit(_LoadedLocal(categories));
+        } else {
+          // If no local categories, fetch from remote
+          add(const CategoryEvent.getCategories());
+        }
+      } catch (e) {
+        // If any error occurs, try to fetch from remote
+        add(const CategoryEvent.getCategories());
+      }
     });
   }
 

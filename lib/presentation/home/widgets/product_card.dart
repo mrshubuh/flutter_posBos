@@ -52,9 +52,10 @@ class ProductCard extends StatelessWidget {
                       imageUrl: '${Variables.imageBaseUrl}${data.image}',
                       placeholder: (context, url) =>
                           const Center(child: CircularProgressIndicator()),
-                      errorWidget: (context, url, error) => const Icon(
-                        Icons.food_bank_outlined,
-                        size: 50,
+                      errorWidget: (context, url, error) => Image.asset(
+                        'assets/logo/logo.png',
+                        height: 50,
+                        fit: BoxFit.contain,
                       ),
                     ),
                   ),

@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_pos/core/extensions/build_context_ext.dart';
 import 'package:flutter_pos/core/extensions/int_ext.dart';
 import 'package:flutter_pos/core/extensions/string_ext.dart';
-import 'package:flutter_pos/data/datasources/product_local_datasource.dart';
 import 'package:flutter_pos/presentation/order/bloc/order/order_bloc.dart';
-import 'package:flutter_pos/presentation/order/widgets/payment_success_dialog.dart';
-import 'package:intl/intl.dart';
 
 import '../../../core/components/buttons.dart';
 import '../../../core/components/custom_text_field.dart';
 import '../../../core/components/spaces.dart';
 import '../../../core/constants/colors.dart';
-import '../bloc/qris/models/order_model.dart';
 
 class PaymentCashDialog extends StatefulWidget {
   final int price;
@@ -23,8 +20,35 @@ class PaymentCashDialog extends StatefulWidget {
 }
 
 class _PaymentCashDialogState extends State<PaymentCashDialog> {
-  TextEditingController?
-      priceController; // = TextEditingController(text: widget.price.currencyFormatRp);
+  TextEditingController? priceController;
+
+  // Helper method to build receipt row
+  Widget _buildReceiptRow(String label, String value,
+      {bool isBold = false, bool isLarge = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+              fontSize: isLarge ? 16 : 14,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+              fontSize: isLarge ? 18 : 14,
+              color: isLarge ? AppColors.primary : Colors.black,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -77,69 +101,181 @@ class _PaymentCashDialogState extends State<PaymentCashDialog> {
             },
           ),
           const SpaceHeight(16.0),
-          // Row(
-          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          //   children: [
-          //     Button.filled(
-          //       onPressed: () {},
-          //       label: 'Uang Pas',
-          //       disabled: true,
-          //       textColor: AppColors.primary,
-          //       fontSize: 13.0,
-          //       width: 112.0,
-          //       height: 50.0,
-          //     ),
-          //     const SpaceWidth(4.0),
-          //     Flexible(
-          //       child: Button.filled(
-          //         onPressed: () {},
-          //         label: widget.price.currencyFormatRp,
-          //         disabled: true,
-          //         textColor: AppColors.primary,
-          //         fontSize: 13.0,
-          //         height: 50.0,
-          //       ),
-          //     ),
-          //   ],
-          // ),
           const SpaceHeight(30.0),
           BlocConsumer<OrderBloc, OrderState>(
             listener: (context, state) {
               state.maybeWhen(
                 orElse: () {},
-                success: (data, qty, total, payment, nominal, idKasir,
-                    namaKasir, _) {
-                  final orderModel = OrderModel(
-                      paymentMethod: payment,
-                      nominalBayar: nominal,
-                      orders: data,
-                      totalQuantity: qty,
-                      totalPrice: total,
-                      idKasir: idKasir,
-                      namaKasir: namaKasir,
-                      //tranction time format 2024-01-03T22:12:22
-                      transactionTime: DateFormat('yyyy-MM-ddTHH:mm:ss')
-                          .format(DateTime.now()),
-                      isSync: false);
-                  ProductLocalDatasource.instance.saveOrder(orderModel);
-                  context.pop();
+                success: (products,
+                    totalQuantity,
+                    totalPrice,
+                    subTotal,
+                    discountPercentage,
+                    appliedDiscount,
+                    paymentMethod,
+                    nominalBayar,
+                    idKasir,
+                    namaKasir,
+                    customerName) {
+                  // Close the payment dialog first
+                  if (context.mounted) {
+                    Navigator.of(context).pop();
+                  }
+
+                  // Show success dialog with receipt preview
                   showDialog(
                     context: context,
-                    builder: (context) => const PaymentSuccessDialog(),
+                    barrierDismissible: false,
+                    builder: (context) => Dialog(
+                      child: Container(
+                        padding: const EdgeInsets.all(24.0),
+                        constraints: const BoxConstraints(maxWidth: 400),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Header
+                            const Text(
+                              'PAYMENT SUCCESSFUL',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+
+                            // Receipt Content
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey[300]!),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  // Receipt header
+                                  const Text(
+                                    'RECEIPT',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    '${DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now())}',
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                  const Divider(height: 24),
+
+                                  // Payment details
+                                  _buildReceiptRow(
+                                      'Total', totalPrice.currencyFormatRp),
+                                  _buildReceiptRow(
+                                      'Paid', nominalBayar.currencyFormatRp),
+                                  const Divider(height: 16),
+                                  _buildReceiptRow(
+                                    'Change',
+                                    (nominalBayar - totalPrice)
+                                        .currencyFormatRp,
+                                    isBold: true,
+                                    isLarge: true,
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            // Buttons
+                            const SizedBox(height: 24),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () {
+                                      // TODO: Implement print functionality
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                            content:
+                                                Text('Printing receipt...')),
+                                      );
+                                    },
+                                    icon: const Icon(Icons.print, size: 20),
+                                    label: const Text('Print'),
+                                    style: OutlinedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 12),
+                                      side:
+                                          BorderSide(color: AppColors.primary),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      // Only close the success dialog
+                                      Navigator.of(context).pop();
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.primary,
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 12),
+                                    ),
+                                    child: const Text('Close', style: TextStyle(color: Colors.white)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   );
                 },
+                error: (message) {
+                  // Show error message
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Error'),
+                      content: Text(message),
+                      actions: [
+                        TextButton(
+                          onPressed: () => context.pop(),
+                          child: const Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                syncing: () {},
+                discountApplied: (discountPercentage, totalAfterDiscount) {},
+                syncStatusUpdated: (orderId, isSynced) {},
               );
             },
             builder: (context, state) {
               return state.maybeWhen(orElse: () {
                 return const SizedBox();
-              }, success:
-                  (data, qty, total, payment, _, idKasir, mameKasir, __) {
+              }, success: (products,
+                  totalQuantity,
+                  totalPrice,
+                  subTotal,
+                  discountPercentage,
+                  appliedDiscount,
+                  paymentMethod,
+                  nominalBayar,
+                  idKasir,
+                  namaKasir,
+                  customerName) {
                 return Button.filled(
                   onPressed: () {
-                    //check if price is empty
                     if (priceController!.text.isEmpty) {
-                      //show dialog error
                       showDialog(
                           context: context,
                           builder: (context) {
@@ -159,9 +295,7 @@ class _PaymentCashDialogState extends State<PaymentCashDialog> {
                       return;
                     }
 
-                    //if price less than total price
-                    if (priceController!.text.toIntegerFromText < total) {
-                      //show dialog error
+                    if (priceController!.text.toIntegerFromText < totalPrice) {
                       showDialog(
                           context: context,
                           builder: (context) {

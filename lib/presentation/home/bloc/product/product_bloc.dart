@@ -20,23 +20,48 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
   ) : super(const _Initial()) {
     on<_Fetch>((event, emit) async {
       emit(const ProductState.loading());
-      final response = await _productRemoteDatasource.getProducts();
-      response.fold(
-        (l) => emit(ProductState.error(l)),
-        (r) {
-          products = r.data;
-          emit(ProductState.success(r.data));
-        },
-      );
+      try {
+        final response = await _productRemoteDatasource.getProducts();
+        await response.fold(
+          (l) async {
+            emit(ProductState.error(l));
+          },
+          (r) async {
+            products = r.data;
+            // Save products to local database
+            await ProductLocalDatasource.instance.insertAllProduct(r.data);
+            if (!emit.isDone) {
+              emit(ProductState.success(products));
+            }
+          },
+        );
+      } catch (e) {
+        if (!emit.isDone) {
+          emit(ProductState.error('Failed to fetch products: $e'));
+        }
+      }
     });
 
     on<_FetchLocal>((event, emit) async {
       emit(const ProductState.loading());
-      final localPproducts =
-          await ProductLocalDatasource.instance.getAllProduct();
-      products = localPproducts;
-
-      emit(ProductState.success(products));
+      try {
+        final localProducts = await ProductLocalDatasource.instance.getAllProduct();
+        if (localProducts.isNotEmpty) {
+          products = localProducts;
+          if (!emit.isDone) {
+            emit(ProductState.success(products));
+          }
+        } else {
+          // If no local products, fetch from remote
+          add(const ProductEvent.fetch());
+        }
+      } catch (e) {
+        if (!emit.isDone) {
+          emit(ProductState.error('Failed to load local products: $e'));
+        }
+        // Try to fetch from remote if local fails
+        add(const ProductEvent.fetch());
+      }
     });
 
     on<_FetchByCategory>((event, emit) async {

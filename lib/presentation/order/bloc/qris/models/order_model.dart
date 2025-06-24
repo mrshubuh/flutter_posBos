@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 
-import '../../../../home/models/order_item.dart';
+import 'package:flutter_pos/data/models/order_item_model.dart';
 
 class OrderModel {
   final int? id;

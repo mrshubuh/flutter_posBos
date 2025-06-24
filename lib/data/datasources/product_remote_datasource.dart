@@ -20,8 +20,10 @@ class ProductRemoteDatasource {
     );
 
     if (response.statusCode == 200) {
+      debugPrint('Products loaded successfully: ${response.body}');
       return right(ProductResponseModel.fromJson(response.body));
     } else {
+      debugPrint('Failed to load products: ${response.body}');
       return left(response.body);
     }
   }
@@ -57,11 +59,14 @@ class ProductRemoteDatasource {
       final String body = await response.stream.bytesToString();
 
       if (response.statusCode == 201) {
+        debugPrint('Product added successfully: $body');
         return right(AddProductResponseModel.fromJson(body));
       } else {
+        debugPrint('Failed to add product: $body');
         return left(body);
       }
     } catch (e) {
+      debugPrint('Failed to add product: $e');
       return left(e.toString());
     }
   }
@@ -78,9 +83,10 @@ class ProductRemoteDatasource {
     );
 
     if (response.statusCode == 200) {
-      debugPrint(response.body);
+      debugPrint('Categories loaded successfully: ${response.body}');
       return right(CategoryResponseModel.fromJson(response.body));
     } else {
+      debugPrint('Failed to load categories: ${response.body}');
       return left(response.body);
     }
   }

@@ -23,16 +23,28 @@ class SyncOrderBloc extends Bloc<SyncOrderEvent, SyncOrderState> {
       for (final order in ordersIsSyncZero) {
         final orderItems = await ProductLocalDatasource.instance
             .getOrderItemByOrderIdLocal(order.id!);
-
+        final orderItemModels1 = orderItems
+            .map((item) => OrderItemModel(
+                  productId: item.product.id!,
+                  quantity: item.quantity,
+                  totalPrice: (item.product.price * item.quantity).toDouble(),
+                ))
+            .toList();
         final orderRequest = OrderRequestModel(
             transactionTime: order.transactionTime,
             totalItem: order.totalQuantity,
-            totalPrice: order.totalPrice,
+            totalPrice: order.totalPrice.toDouble(),
             kasirId: order.idKasir,
             paymentMethod: order.paymentMethod,
-            orderItems: orderItems);
-        final response = await orderRemoteDatasource.sendOrder(orderRequest);
-        if (response) {
+            orderItems: orderItemModels1,
+            paymentAmount: 0.0, // Changed from null to 0.0
+            subTotal: order.totalPrice.toDouble(), // Added subtotal
+            tax: 0.0, // Changed from null to 0.0
+            discount: 0.0, // Changed from null to 0.0
+            serviceCharge: 0.0 // Changed from null to 0.0
+            );
+        final response = await orderRemoteDatasource.createOrder(orderRequest);
+        if (response['success'] as bool) {
           await ProductLocalDatasource.instance
               .updateIsSyncOrderById(order.id!);
         }
@@ -50,16 +62,30 @@ class SyncOrderBloc extends Bloc<SyncOrderEvent, SyncOrderState> {
       for (final order in ordersIsSyncZero) {
         final orderItems = await ProductLocalDatasource.instance
             .getOrderItemByOrderIdLocal(order.id!);
+        final orderItemModels2 = orderItems
+            .map((item) => OrderItemModel(
+                  productId: item.product.id!,
+                  quantity: item.quantity,
+                  totalPrice: (item.product.price * item.quantity).toDouble(),
+                ))
+            .toList();
 
         final orderRequest = OrderRequestModel(
             transactionTime: order.transactionTime,
             totalItem: order.totalQuantity,
-            totalPrice: order.totalPrice,
+            totalPrice: order.totalPrice.toDouble(),
             kasirId: order.idKasir,
             paymentMethod: order.paymentMethod,
-            orderItems: orderItems);
-        final response = await orderRemoteDatasource.sendOrder(orderRequest);
-        if (response) {
+            orderItems: orderItemModels2,
+            paymentAmount: 0.0, // Changed from null to 0.0
+            subTotal: order.totalPrice.toDouble(), // Added subtotal
+            tax: 0.0, // Changed from null to 0.0
+            discount: 0.0, // Changed from null to 0.0
+            serviceCharge: 0.0 // Changed from null to 0.0
+            );
+
+        final response = await orderRemoteDatasource.createOrder(orderRequest);
+        if (response['success'] as bool) {
           await ProductLocalDatasource.instance
               .updateIsSyncOrderById(order.id!);
         }

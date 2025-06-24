@@ -16,8 +16,38 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final _formKey = GlobalKey<FormState>();
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
+  bool _obscurePassword = true;
+  
+  // Form field validators
+  String? _validateEmail(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter your email';
+    }
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegex.hasMatch(value)) {
+      return 'Please enter a valid email';
+    }
+    return null;
+  }
+
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter your password';
+    }
+    if (value.length < 6) {
+      return 'Password must be at least 6 characters';
+    }
+    return null;
+  }
+
+  void _togglePasswordVisibility() {
+    setState(() {
+      _obscurePassword = !_obscurePassword;
+    });
+  }
 
   @override
   void dispose() {
@@ -34,9 +64,11 @@ class _LoginPageState extends State<LoginPage> {
         padding: const EdgeInsets.symmetric(horizontal: 24.0),
         child: Center(
           child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
                 const SizedBox(height: 80.0),
                 Image.asset(
                   'assets/logo/logor.png',
@@ -62,7 +94,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 const SizedBox(height: 40.0),
-                TextField(
+                TextFormField(
                   controller: usernameController,
                   decoration: InputDecoration(
                     labelText: 'Email',
@@ -74,16 +106,26 @@ class _LoginPageState extends State<LoginPage> {
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide:
-                          BorderSide(color: Colors.grey.withValues(alpha: 0.5)),
+                          BorderSide(color: Colors.grey.withOpacity(0.5)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(color: AppColors.primary),
                     ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Colors.red),
+                    ),
+                    focusedErrorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Colors.red),
+                    ),
                     prefixIcon: const Icon(Icons.email, color: Colors.grey),
                   ),
                   style: const TextStyle(color: Colors.black),
                   keyboardType: TextInputType.emailAddress,
+                  validator: _validateEmail,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
                 ),
                 const SizedBox(height: 12.0),
                 // CustomTextField(
@@ -91,7 +133,8 @@ class _LoginPageState extends State<LoginPage> {
                 //   label: 'Password',
                 //   obscureText: true,
                 // ),
-                TextField(
+                const SizedBox(height: 16.0),
+                TextFormField(
                   controller: passwordController,
                   decoration: InputDecoration(
                     labelText: 'Password',
@@ -103,16 +146,33 @@ class _LoginPageState extends State<LoginPage> {
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide:
-                          BorderSide(color: Colors.grey.withValues(alpha: 0.5)),
+                          BorderSide(color: Colors.grey.withOpacity(0.5)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(color: AppColors.primary),
                     ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Colors.red),
+                    ),
+                    focusedErrorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Colors.red),
+                    ),
                     prefixIcon: const Icon(Icons.lock, color: Colors.grey),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                        color: Colors.grey,
+                      ),
+                      onPressed: _togglePasswordVisibility,
+                    ),
                   ),
                   style: const TextStyle(color: Colors.black),
-                  obscureText: true,
+                  obscureText: _obscurePassword,
+                  validator: _validatePassword,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
                 ),
                 const SizedBox(height: 24.0),
                 BlocListener<LoginBloc, LoginState>(
@@ -142,12 +202,14 @@ class _LoginPageState extends State<LoginPage> {
                         orElse: () {
                           return Button.filled(
                             onPressed: () {
-                              context.read<LoginBloc>().add(
-                                    LoginEvent.login(
-                                      email: usernameController.text,
-                                      password: passwordController.text,
-                                    ),
-                                  );
+                              if (_formKey.currentState!.validate()) {
+                                context.read<LoginBloc>().add(
+                                      LoginEvent.login(
+                                        email: usernameController.text.trim(),
+                                        password: passwordController.text,
+                                      ),
+                                    );
+                              }
                             },
                             label: 'Login',
                           );
@@ -166,6 +228,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

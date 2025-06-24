@@ -7,12 +7,20 @@ class OrderState with _$OrderState {
   const factory OrderState.success(
     List<OrderItem> products,
     int totalQuantity,
-    int totalPrice,
-    String paymentMethod,
-    int nominalBayar,
-    int idKasir,
-    String namaKasir,
-    String customerName,
-  ) = _Success;
+    int totalPrice, {
+    required int subTotal,
+    required double discountPercentage,
+    required DiscountResponseModel? appliedDiscount,
+    required String paymentMethod,
+    required int nominalBayar,
+    required int idKasir,
+    required String namaKasir,
+    required String customerName,
+  }) = _Success;
   const factory OrderState.error(String message) = _Error;
+  const factory OrderState.syncing() = _Syncing;
+  const factory OrderState.discountApplied(
+      double discountPercentage, int totalAfterDiscount) = _DiscountApplied;
+  const factory OrderState.syncStatusUpdated(int orderId, bool isSynced) =
+      _SyncStatusUpdated;
 }

@@ -1,6 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:flutter_pos/data/models/response/product_response_model.dart';
-import 'package:flutter_pos/presentation/home/models/order_item.dart';
+import 'package:flutter_pos/data/models/order_item_model.dart';
 import 'package:flutter_pos/presentation/order/bloc/qris/models/draft_order_model.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:intl/intl.dart';
@@ -14,14 +14,19 @@ part 'checkout_bloc.freezed.dart';
 
 class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
   CheckoutBloc() : super(const _Success([], 0, 0, 'customer')) {
-    on<_AddCheckout>((event, emit) {
+    on<_AddCheckout>((event, emit) async {
       var currentStates = state as _Success;
       List<OrderItem> newCheckout = [...currentStates.products];
       emit(const _Loading());
-      if (newCheckout.any((element) => element.product == event.product)) {
-        var index = newCheckout
-            .indexWhere((element) => element.product == event.product);
-        newCheckout[index].quantity++;
+      
+      final existingIndex = newCheckout.indexWhere(
+        (element) => element.product == event.product,
+      );
+      
+      if (existingIndex != -1) {
+        // Update quantity by creating a new OrderItem with updated quantity
+        final existingItem = newCheckout[existingIndex];
+        newCheckout[existingIndex] = existingItem.withQuantity(existingItem.quantity + 1);
       } else {
         newCheckout.add(OrderItem(product: event.product, quantity: 1));
       }
@@ -42,13 +47,19 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
       var currentStates = state as _Success;
       List<OrderItem> newCheckout = [...currentStates.products];
       emit(const _Loading());
-      if (newCheckout.any((element) => element.product == event.product)) {
-        var index = newCheckout
-            .indexWhere((element) => element.product == event.product);
-        if (newCheckout[index].quantity > 1) {
-          newCheckout[index].quantity--;
+      
+      final existingIndex = newCheckout.indexWhere(
+        (element) => element.product == event.product,
+      );
+      
+      if (existingIndex != -1) {
+        final existingItem = newCheckout[existingIndex];
+        if (existingItem.quantity > 1) {
+          // Decrement quantity by creating a new OrderItem
+          newCheckout[existingIndex] = 
+              existingItem.withQuantity(existingItem.quantity - 1);
         } else {
-          newCheckout.removeAt(index);
+          newCheckout.removeAt(existingIndex);
         }
       }
 

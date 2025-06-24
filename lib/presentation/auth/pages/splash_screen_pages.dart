@@ -71,16 +71,16 @@ class _SplashScreenPagesState extends State<SplashScreenPages>
                   height: 200,
                   fit: BoxFit.contain,
                 ),
-                const SizedBox(height: 30),
-                const Text(
-                  "POS App",
-                  style: TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 20),
+                // const SizedBox(height: 30),
+                // const Text(
+                //   "POS App",
+                //   style: TextStyle(
+                //     fontSize: 36,
+                //     fontWeight: FontWeight.bold,
+                //     color: Colors.black87,
+                //   ),
+                // ),
+                // const SizedBox(height: 20),
                 const CircularProgressIndicator(
                   color: Colors.blueAccent,
                   strokeWidth: 3,

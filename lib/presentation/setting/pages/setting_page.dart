@@ -14,6 +14,7 @@ import 'package:flutter_pos/presentation/setting/pages/sync_data_page.dart';
 import '../../../core/assets/assets.gen.dart';
 import '../../../core/components/menu_button.dart';
 import '../../../core/components/spaces.dart';
+import '../../../core/utils/connectivity_utils.dart';
 import '../../home/bloc/logout/logout_bloc.dart';
 import '../bloc/sync_order/sync_order_bloc.dart';
 import 'manage_product_page.dart';
@@ -26,8 +27,22 @@ class SettingPage extends StatefulWidget {
 }
 
 class _SettingPageState extends State<SettingPage> {
+   bool isOnline = true;
+  @override
+  void initState() {
+    _checkConnectivity();
+    super.initState();
+  }
+
+  Future<void> _checkConnectivity() async {
+    final connected = await ConnectivityUtils.isConnected();
+    setState(() {
+      isOnline = connected;
+    });
+  }
   @override
   Widget build(BuildContext context) {
+    final isSmallScreen = MediaQuery.of(context).size.width < 360;
     return Scaffold(
         appBar: AppBar(
           leading: IconButton(
@@ -43,6 +58,38 @@ class _SettingPageState extends State<SettingPage> {
               fontWeight: FontWeight.bold,
             ),
           ),
+          actions: [
+            Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: isSmallScreen ? 6 : 8,
+                vertical: 2,
+              ),
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: isOnline ? Colors.green : Colors.red,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isOnline ? Icons.wifi : Icons.wifi_off,
+                    color: Colors.white,
+                    size: isSmallScreen ? 12 : 14,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    isOnline ? 'Online' : 'Offline',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: isSmallScreen ? 10 : 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         body: SingleChildScrollView(
           child: Column(
@@ -168,12 +215,6 @@ class _SettingPageState extends State<SettingPage> {
                                     ],
                                   );
                                 });
-                            // context.read<SyncOrderBloc>().add(
-                            //     const SyncOrderEvent.sendOrderForCloseChasier());
-                            // Navigator.push(
-                            //     context,
-                            //     MaterialPageRoute(
-                            //         builder: (context) => const SyncDataPage()));
                           },
                           isImage: true,
                         ),
@@ -185,25 +226,69 @@ class _SettingPageState extends State<SettingPage> {
               const SpaceHeight(60),
               BlocConsumer<LogoutBloc, LogoutState>(
                 listener: (context, state) {
-                  state.maybeMap(
-                    orElse: () {},
-                    success: (_) {
+                  state.maybeWhen(
+                    success: () {
                       AuthLocalDatasource().removeAuthData();
-                      Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const LoginPage()));
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const LoginPage()),
+                        (route) => false,
+                      );
                     },
+                    error: (message) {
+                      AuthLocalDatasource().removeAuthData();
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const LoginPage()),
+                        (route) => false,
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(message)),
+                      );
+                    },
+                    orElse: () {},
                   );
                 },
                 builder: (context, state) {
                   return ElevatedButton(
                     onPressed: () {
-                      context
-                          .read<LogoutBloc>()
-                          .add(const LogoutEvent.logout());
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Konfirmasi Logout'),
+                          content: const Text(
+                              'Apakah Anda yakin ingin keluar dari aplikasi?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Batal'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                context
+                                    .read<LogoutBloc>()
+                                    .add(const LogoutEvent.logout());
+                              },
+                              child: const Text('Ya, Logout'),
+                            ),
+                          ],
+                        ),
+                      );
                     },
-                    child: const Text('Logout'),
+                    child: state.maybeWhen(
+                      loading: () => const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      ),
+                      orElse: () => const Text('Logout'),
+                    ),
                   );
                 },
               ),

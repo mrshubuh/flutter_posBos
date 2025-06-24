@@ -1,12 +1,15 @@
+import 'package:flutter_pos/data/models/order_item_model.dart';
 import 'package:flutter_pos/data/models/response/product_response_model.dart';
 import 'package:flutter_pos/presentation/order/bloc/qris/models/order_model.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../../presentation/home/models/draft_order_item.dart';
-import '../../presentation/home/models/order_item.dart';
 import '../../presentation/order/bloc/qris/models/draft_order_model.dart';
-import '../models/request/order_request_model.dart';
 import '../models/response/category_response_model.dart';
+import '../models/response/discount_response_model.dart';
+import '../models/response/tax_response_model.dart';
+import '../models/response/service_charge_response_model.dart';
+import '../models/response/customer_response_model.dart';
 
 class ProductLocalDatasource {
   ProductLocalDatasource._init();
@@ -23,21 +26,21 @@ class ProductLocalDatasource {
 
     return await openDatabase(
       path,
-      version: 2, // Increment version to trigger onUpgrade
+      version: 15, // Naikkan versi untuk trigger migrasi
       onCreate: _createDB,
       onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < 2) {
-          // Drop old tables if they exist
-          await db.execute('DROP TABLE IF EXISTS $tableProducts');
-          await db.execute('DROP TABLE IF EXISTS orders');
-          await db.execute('DROP TABLE IF EXISTS categories');
-          await db.execute('DROP TABLE IF EXISTS order_items');
-          await db.execute('DROP TABLE IF EXISTS draft_orders');
-          await db.execute('DROP TABLE IF EXISTS draft_order_items');
-          
-          // Recreate all tables with new schema
-          await _createDB(db, newVersion);
-        }
+        // Drop all tables and recreate
+        await db.execute('DROP TABLE IF EXISTS $tableProducts');
+        await db.execute('DROP TABLE IF EXISTS orders');
+        await db.execute('DROP TABLE IF EXISTS categories');
+        await db.execute('DROP TABLE IF EXISTS discounts');
+        await db.execute('DROP TABLE IF EXISTS taxes');
+        await db.execute('DROP TABLE IF EXISTS service_charges');
+        await db.execute('DROP TABLE IF EXISTS customers');
+        await db.execute('DROP TABLE IF EXISTS order_items');
+        await db.execute('DROP TABLE IF EXISTS draft_orders');
+        await db.execute('DROP TABLE IF EXISTS draft_order_items');
+        await _createDB(db, newVersion);
       },
     );
   }
@@ -47,6 +50,10 @@ class ProductLocalDatasource {
     await db.execute('DROP TABLE IF EXISTS $tableProducts');
     await db.execute('DROP TABLE IF EXISTS orders');
     await db.execute('DROP TABLE IF EXISTS categories');
+    await db.execute('DROP TABLE IF EXISTS discounts');
+    await db.execute('DROP TABLE IF EXISTS taxes');
+    await db.execute('DROP TABLE IF EXISTS service_charges');
+    await db.execute('DROP TABLE IF EXISTS customers');
     await db.execute('DROP TABLE IF EXISTS order_items');
     await db.execute('DROP TABLE IF EXISTS draft_orders');
     await db.execute('DROP TABLE IF EXISTS draft_order_items');
@@ -91,6 +98,72 @@ class ProductLocalDatasource {
       )
     ''');
 
+    // discounts
+    await db.execute('''
+      CREATE TABLE discounts (
+        id INTEGER PRIMARY KEY,
+        name TEXT,
+        description TEXT,
+        type TEXT,
+        value REAL,
+        status TEXT,
+        min_quantity INTEGER,
+        max_quantity INTEGER,
+        min_amount REAL,
+        apply_to TEXT,
+        customer_type TEXT,
+        valid_days TEXT,
+        start_at TEXT,
+        expired_at TEXT,
+        start_time TEXT,
+        end_time TEXT,
+        combinable INTEGER,
+        usage_limit INTEGER,
+        usage_count INTEGER,
+        created_at TEXT,
+        updated_at TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE taxes (
+        id INTEGER PRIMARY KEY,
+        name TEXT,
+        rate REAL,
+        created_at TEXT,
+        updated_at TEXT,
+        deleted_at TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE service_charges (
+        id INTEGER PRIMARY KEY,
+        name TEXT,
+        rate REAL,
+        created_at TEXT,
+        updated_at TEXT,
+        deleted_at TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE customers (
+        id INTEGER PRIMARY KEY,
+        name TEXT,
+        phone_number TEXT,
+        email TEXT,
+        address TEXT,
+        city TEXT,
+        state TEXT,
+        postal_code TEXT,
+        customer_type TEXT,
+        created_at TEXT,
+        updated_at TEXT,
+        deleted_at TEXT
+      )
+    ''');
+
     await db.execute('''
       CREATE TABLE order_items (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -126,9 +199,113 @@ class ProductLocalDatasource {
   //insert all categories
   Future<void> insertAllCategories(List<Category> categories) async {
     final db = await instance.database;
-    for (var category in categories) {
-      await db.insert('categories', category.toMap());
+    
+    // Start a transaction to ensure atomicity
+    await db.transaction((txn) async {
+      try {
+        // First, delete all existing categories
+        await txn.delete('categories');
+        
+        // Then insert all new categories in a batch
+        final batch = txn.batch();
+        
+        for (var category in categories) {
+          batch.insert('categories', category.toMap(), 
+              conflictAlgorithm: ConflictAlgorithm.replace);
+        }
+        
+        await batch.commit(noResult: true);
+      } catch (e) {
+        // If any error occurs, the transaction will be rolled back automatically
+        rethrow;
+      }
+    });
+  }
+
+  //insert all discounts
+  Future<void> insertAllDiscount(List<DiscountResponseModel> discounts) async {
+    final db = await instance.database;
+    await db.delete('discounts');
+    final batch = db.batch();
+    for (var discount in discounts) {
+      batch.insert('discounts', _discountToMap(discount));
     }
+    await batch.commit(noResult: true);
+  }
+
+  //delete all discounts
+  Future<void> removeAllDiscount() async {
+    final db = await instance.database;
+    await db.delete('discounts');
+  }
+
+  //get all discounts
+  Future<List<DiscountResponseModel>> getAllDiscount() async {
+    final db = await instance.database;
+    final result = await db.query('discounts');
+    return result.map((e) => _discountFromMap(e)).toList();
+  }
+
+  Map<String, dynamic> _discountToMap(DiscountResponseModel d) => {
+        'id': d.id,
+        'name': d.name,
+        'description': d.description,
+        'type': d.type,
+        'value': d.value,
+        'status': d.status,
+        'min_quantity': d.minQuantity,
+        'max_quantity': d.maxQuantity,
+        'min_amount': d.minAmount,
+        'apply_to': d.applyTo,
+        'customer_type': d.customerType,
+        'valid_days': d.validDays.join(','),
+        'start_at': d.startAt?.toIso8601String(),
+        'expired_at': d.expiredAt?.toIso8601String(),
+        'start_time': d.startTime,
+        'end_time': d.endTime,
+        'combinable': d.combinable ? 1 : 0,
+        'usage_limit': d.usageLimit,
+        'usage_count': d.usageCount,
+        'created_at': d.createdAt?.toIso8601String(),
+        'updated_at': d.updatedAt?.toIso8601String(),
+      };
+
+  DiscountResponseModel _discountFromMap(Map<String, dynamic> map) {
+    return DiscountResponseModel(
+      id: map['id'] as int,
+      name: map['name'] as String,
+      description: map['description'] as String? ?? '',
+      type: map['type'] as String? ?? 'percentage',
+      value: (map['value'] as num?)?.toDouble() ?? 0.0,
+      status: map['status'] as String? ?? 'inactive',
+      minQuantity: map['min_quantity'] as int? ?? 0,
+      maxQuantity: map['max_quantity'] as int? ?? 0,
+      minAmount: (map['min_amount'] as num?)?.toDouble() ?? 0.0,
+      applyTo: map['apply_to'] as String? ?? 'all',
+      customerType: map['customer_type'] as String? ?? 'all',
+      validDays: (map['valid_days'] as String?)
+              ?.split(',')
+              .where((e) => e.isNotEmpty)
+              .map((e) => int.tryParse(e) ?? 0)
+              .toList() ??
+          [],
+      startAt:
+          map['start_at'] != null ? DateTime.tryParse(map['start_at']) : null,
+      expiredAt: map['expired_at'] != null
+          ? DateTime.tryParse(map['expired_at'])
+          : null,
+      startTime: map['start_time'] as String?,
+      endTime: map['end_time'] as String?,
+      combinable: map['combinable'] == 1,
+      usageLimit: map['usage_limit'] as int?,
+      usageCount: map['usage_count'] as int? ?? 0,
+      createdAt: map['created_at'] != null
+          ? DateTime.tryParse(map['created_at'])
+          : null,
+      updatedAt: map['updated_at'] != null
+          ? DateTime.tryParse(map['updated_at'])
+          : null,
+    );
   }
 
   //delete all categories
@@ -211,11 +388,37 @@ class ProductLocalDatasource {
   }
 
   //get order item by id order
-  Future<List<OrderItemModel>> getOrderItemByOrderIdLocal(int idOrder) async {
+  Future<List<OrderItem>> getOrderItemByOrderIdLocal(int idOrder) async {
     final db = await instance.database;
     final result = await db.query('order_items', where: 'id_order = $idOrder');
 
-    return result.map((e) => OrderItem.fromMapLocal(e)).toList();
+    // Get all product IDs first
+    final productIds = result.map((e) => e['product_id'] as int).toList();
+
+    // Get all products in a single query
+    final products = await Future.wait(
+      productIds.map((id) => getProductById(id)),
+    );
+
+    // Create a map of product ID to Product
+    final productMap = {for (var product in products) product?.id: product};
+
+    // Convert each order item
+    return result.map((e) {
+      final product = productMap[e['product_id'] as int]!;
+      return OrderItem(
+        product: product,
+        quantity: e['quantity'] as int,
+        id: e['id'] as int?,
+        orderId: e['order_id'] as int?,
+        createdAt: e['created_at'] != null
+            ? DateTime.parse(e['created_at'] as String)
+            : null,
+        updatedAt: e['updated_at'] != null
+            ? DateTime.parse(e['updated_at'] as String)
+            : null,
+      );
+    }).toList();
   }
 
   //update isSync order by id
@@ -262,17 +465,17 @@ class ProductLocalDatasource {
     return results;
   }
 
-
   Future<Database> get database async {
     if (_database != null) return _database!;
 
     try {
-      _database = await _initDB('pos14.db'); // Changed db name to force recreation
+      _database =
+          await _initDB('pos15.db'); // Ganti nama file db agar pasti recreate
       return _database!;
     } catch (e) {
       // If there's an error, delete the database and try again
-      await deleteDatabase('${await getDatabasesPath()}pos14.db');
-      _database = await _initDB('pos14.db');
+      await deleteDatabase('${await getDatabasesPath()}pos15.db');
+      _database = await _initDB('pos15.db');
       return _database!;
     }
   }
@@ -283,41 +486,69 @@ class ProductLocalDatasource {
     await db.delete(tableProducts);
   }
 
+  Future<void> insertAllProducts(List<Product> products) async {
+    final db = await instance.database;
+    final batch = db.batch();
+    
+    // First, clear existing products
+    await removeAllProduct();
+    
+    // Then insert all new products
+    for (final product in products) {
+      batch.insert(
+        tableProducts,
+        {
+          'product_id': product.id,
+          'name': product.name,
+          'description': product.description ?? '',
+          'price': product.price,
+          'stock': product.stock,
+          'category_id': product.categoryId,
+          'sku': product.sku,
+          'unit_of_measure': product.unitOfMeasure,
+          'expired_date': product.expiredDate?.toIso8601String(),
+          'image': product.image,
+          'is_best_seller': product.isBestSeller ? 1 : 0,
+          'is_ready': product.isReady ? 1 : 0,
+          'is_sync': 1, // Mark as synced
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+    
+    await batch.commit(noResult: true);
+  }
+
   //insert data product from list product
   Future<void> insertAllProduct(List<Product> products) async {
-    try {
-      final db = await instance.database;
-      final batch = db.batch();
-      
-      for (var product in products) {
-        final map = product.toLocalMap();
-        // Ensure all required fields are present
-        map['product_id'] = product.id ?? 0;
-        map['is_best_seller'] = product.isBestSeller ? 1 : 0;
-        map['is_ready'] = product.isReady ? 1 : 0;
+    final db = await instance.database;
+    
+    // Start a transaction to ensure atomicity
+    await db.transaction((txn) async {
+      try {
+        // First, delete all existing products
+        await txn.delete(tableProducts);
         
-        batch.insert(tableProducts, map);
-      }
-      
-      await batch.commit(noResult: true);
-    } catch (e) {
-      // Handle database schema changes by recreating the table
-      await _database?.close();
-      _database = null;
-      final db = await instance.database;
-      final batch = db.batch();
-      
-      for (var product in products) {
-        final map = product.toLocalMap();
-        map['product_id'] = product.id ?? 0;
-        map['is_best_seller'] = product.isBestSeller ? 1 : 0;
-        map['is_ready'] = product.isReady ? 1 : 0;
+        // Then insert all new products in a batch
+        final batch = txn.batch();
         
-        batch.insert(tableProducts, map);
+        for (var product in products) {
+          final map = product.toLocalMap();
+          // Ensure all required fields are present
+          map['product_id'] = product.id ?? 0;
+          map['is_best_seller'] = product.isBestSeller ? 1 : 0;
+          map['is_ready'] = product.isReady ? 1 : 0;
+          map['is_sync'] = 1; // Mark as synced
+          
+          batch.insert(tableProducts, map, conflictAlgorithm: ConflictAlgorithm.replace);
+        }
+        
+        await batch.commit(noResult: true);
+      } catch (e) {
+        // If any error occurs, the transaction will be rolled back automatically
+        rethrow;
       }
-      
-      await batch.commit(noResult: true);
-    }
+    });
   }
 
   //insert data product
@@ -329,7 +560,7 @@ class ProductLocalDatasource {
       map['product_id'] = product.id ?? 0;
       map['is_best_seller'] = product.isBestSeller ? 1 : 0;
       map['is_ready'] = product.isReady ? 1 : 0;
-      
+
       final id = await db.insert(tableProducts, map);
       return product.copyWith(id: id);
     } catch (e) {
@@ -341,7 +572,7 @@ class ProductLocalDatasource {
       map['product_id'] = product.id ?? 0;
       map['is_best_seller'] = product.isBestSeller ? 1 : 0;
       map['is_ready'] = product.isReady ? 1 : 0;
-      
+
       final id = await db.insert(tableProducts, map);
       return product.copyWith(id: id);
     }
@@ -369,8 +600,8 @@ class ProductLocalDatasource {
     try {
       final db = await instance.database;
       final result = await db.query(
-        tableProducts, 
-        where: 'product_id = ?', 
+        tableProducts,
+        where: 'product_id = ?',
         whereArgs: [id],
       );
 
@@ -385,11 +616,174 @@ class ProductLocalDatasource {
       _database = null;
       final db = await instance.database;
       final result = await db.query(
-        tableProducts, 
-        where: 'product_id = ?', 
+        tableProducts,
+        where: 'product_id = ?',
         whereArgs: [id],
       );
       return result.isEmpty ? null : Product.fromMap(result.first);
     }
+  }
+
+  //insert all taxes
+  Future<void> insertAllTax(List<TaxResponseModel> taxes) async {
+    final db = await instance.database;
+    await db.delete('taxes');
+    final batch = db.batch();
+    for (var tax in taxes) {
+      batch.insert('taxes', _taxToMap(tax));
+    }
+    await batch.commit(noResult: true);
+  }
+
+  //delete all taxes
+  Future<void> removeAllTax() async {
+    final db = await instance.database;
+    await db.delete('taxes');
+  }
+
+  //get all taxes
+  Future<List<TaxResponseModel>> getAllTax() async {
+    final db = await instance.database;
+    final result = await db.query('taxes');
+    return result.map((e) => _taxFromMap(e)).toList();
+  }
+
+  Map<String, dynamic> _taxToMap(TaxResponseModel t) => {
+        'id': t.id,
+        'name': t.name,
+        'rate': t.rate,
+        'created_at': t.createdAt?.toIso8601String(),
+        'updated_at': t.updatedAt?.toIso8601String(),
+        'deleted_at': t.deletedAt?.toIso8601String(),
+      };
+
+  TaxResponseModel _taxFromMap(Map<String, dynamic> map) {
+    return TaxResponseModel(
+      id: map['id'] as int,
+      name: map['name'] as String,
+      rate: (map['rate'] as num?)?.toDouble() ?? 0.0,
+      createdAt: map['created_at'] != null
+          ? DateTime.tryParse(map['created_at'])
+          : null,
+      updatedAt: map['updated_at'] != null
+          ? DateTime.tryParse(map['updated_at'])
+          : null,
+      deletedAt: map['deleted_at'] != null
+          ? DateTime.tryParse(map['deleted_at'])
+          : null,
+    );
+  }
+
+  //insert all service charges
+  Future<void> insertAllServiceCharge(
+      List<ServiceChargeResponseModel> charges) async {
+    final db = await instance.database;
+    await db.delete('service_charges');
+    final batch = db.batch();
+    for (var charge in charges) {
+      batch.insert('service_charges', _serviceChargeToMap(charge));
+    }
+    await batch.commit(noResult: true);
+  }
+
+  //delete all service charges
+  Future<void> removeAllServiceCharge() async {
+    final db = await instance.database;
+    await db.delete('service_charges');
+  }
+
+  //get all service charges
+  Future<List<ServiceChargeResponseModel>> getAllServiceCharge() async {
+    final db = await instance.database;
+    final result = await db.query('service_charges');
+    return result.map((e) => _serviceChargeFromMap(e)).toList();
+  }
+
+  Map<String, dynamic> _serviceChargeToMap(ServiceChargeResponseModel s) => {
+        'id': s.id,
+        'name': s.name,
+        'rate': s.rate,
+        'created_at': s.createdAt?.toIso8601String(),
+        'updated_at': s.updatedAt?.toIso8601String(),
+        'deleted_at': s.deletedAt?.toIso8601String(),
+      };
+
+  ServiceChargeResponseModel _serviceChargeFromMap(Map<String, dynamic> map) {
+    return ServiceChargeResponseModel(
+      id: map['id'] as int,
+      name: map['name'] as String,
+      rate: (map['rate'] as num?)?.toDouble() ?? 0.0,
+      createdAt: map['created_at'] != null
+          ? DateTime.tryParse(map['created_at'])
+          : null,
+      updatedAt: map['updated_at'] != null
+          ? DateTime.tryParse(map['updated_at'])
+          : null,
+      deletedAt: map['deleted_at'] != null
+          ? DateTime.tryParse(map['deleted_at'])
+          : null,
+    );
+  }
+
+  //insert all customers
+  Future<void> insertAllCustomer(List<CustomerResponseModel> customers) async {
+    final db = await instance.database;
+    await db.delete('customers');
+    final batch = db.batch();
+    for (var c in customers) {
+      batch.insert('customers', _customerToMap(c));
+    }
+    await batch.commit(noResult: true);
+  }
+
+  //delete all customers
+  Future<void> removeAllCustomer() async {
+    final db = await instance.database;
+    await db.delete('customers');
+  }
+
+  //get all customers
+  Future<List<CustomerResponseModel>> getAllCustomer() async {
+    final db = await instance.database;
+    final result = await db.query('customers');
+    return result.map((e) => _customerFromMap(e)).toList();
+  }
+
+  Map<String, dynamic> _customerToMap(CustomerResponseModel c) => {
+        'id': c.id,
+        'name': c.name,
+        'phone_number': c.phoneNumber,
+        'email': c.email,
+        'address': c.address,
+        'city': c.city,
+        'state': c.state,
+        'postal_code': c.postalCode,
+        'customer_type': c.customerType,
+        'created_at': c.createdAt?.toIso8601String(),
+        'updated_at': c.updatedAt?.toIso8601String(),
+        'deleted_at': c.deletedAt?.toIso8601String(),
+      };
+
+  CustomerResponseModel _customerFromMap(Map<String, dynamic> map) {
+    return CustomerResponseModel(
+      id: map['id'] as int,
+      name: map['name'] as String,
+      phoneNumber: map['phone_number'] as String? ?? '',
+      email: map['email'] as String? ?? '',
+      address: map['address'] as String? ?? '',
+      city: map['city'] as String? ?? '',
+      state: map['state'] as String? ?? '',
+      postalCode: map['postal_code'] as String? ?? '',
+      customerType: map['customer_type'] as String? ?? '',
+      createdAt: map['created_at'] != null
+          ? DateTime.tryParse(map['created_at'])
+          : null,
+      updatedAt: map['updated_at'] != null
+          ? DateTime.tryParse(map['updated_at'])
+          : null,
+      deletedAt: map['deleted_at'] != null
+          ? DateTime.tryParse(map['deleted_at'])
+          : null,
+    );
   }
 }

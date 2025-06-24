@@ -9,6 +9,7 @@ import '../../../core/assets/assets.gen.dart';
 import '../../../core/components/menu_button.dart';
 import '../../../core/components/search_input.dart';
 import '../../../core/components/spaces.dart';
+import '../../../core/utils/connectivity_utils.dart';
 import '../../../data/datasources/auth_local_datasource.dart';
 import '../bloc/category/category_bloc.dart';
 import '../widgets/product_card.dart';
@@ -25,9 +26,11 @@ class _HomePageState extends State<HomePage> {
   final searchController = TextEditingController();
   final indexValue = ValueNotifier(0);
   int currentIndex = 0;
+  bool isOnline = true;
 
   @override
   void initState() {
+    _checkConnectivity();
     context.read<ProductBloc>().add(const ProductEvent.fetchLocal());
     context.read<CategoryBloc>().add(const CategoryEvent.getCategoriesLocal());
     AuthLocalDatasource().getPrinter().then((value) async {
@@ -38,18 +41,33 @@ class _HomePageState extends State<HomePage> {
     super.initState();
   }
 
-  void onCategoryTap(int index, {String? categoryName}) {
+  Future<void> _checkConnectivity() async {
+    final connected = await ConnectivityUtils.isConnected();
+    setState(() {
+      isOnline = connected;
+    });
+  }
+
+  void onCategoryTap(int index, {String? categoryName, int? categoryId}) {
     searchController.clear();
-    currentIndex = index;
+    setState(() {
+      currentIndex = index;
+    });
     if (index == 0) {
       context.read<ProductBloc>().add(const ProductEvent.fetchLocal());
-    } else if (categoryName != null) {
-      context.read<ProductBloc>().add(ProductEvent.fetchByCategory(categoryName));
+    } else if (categoryId != null) {
+      context
+          .read<ProductBloc>()
+          .add(ProductEvent.fetchByCategory(categoryId.toString()));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isSmallScreen = MediaQuery.of(context).size.width < 360;
+    // final paddingHorizontal = EdgeInsets.symmetric(
+    //   horizontal: isSmallScreen ? 12.0 : 16.0,
+    // );
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -61,6 +79,36 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         actions: [
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: isSmallScreen ? 6 : 8,
+              vertical: 2,
+            ),
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              color: isOnline ? Colors.green : Colors.red,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isOnline ? Icons.wifi : Icons.wifi_off,
+                  color: Colors.white,
+                  size: isSmallScreen ? 12 : 14,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  isOnline ? 'Online' : 'Offline',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: isSmallScreen ? 10 : 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
           IconButton(
             onPressed: () {
               context.push(const DraftOrderPage());
@@ -134,7 +182,8 @@ class _HomePageState extends State<HomePage> {
                               iconPath: Assets.icons.allCategories.path,
                               label: category.name,
                               isActive: currentIndex == category.id,
-                              onPressed: () => onCategoryTap(category.id, categoryName: category.name),
+                              onPressed: () => onCategoryTap(category.id,
+                                  categoryId: category.id),
                             ),
                           ),
                         ),

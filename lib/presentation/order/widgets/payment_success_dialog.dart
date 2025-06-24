@@ -39,9 +39,22 @@ class PaymentSuccessDialog extends StatelessWidget {
         builder: (context, state) {
           return state.maybeWhen(
             orElse: () => const SizedBox.shrink(),
-            success: (data, qty, total, paymentType, nominal, idKasir,
-                nameKasir, customerName) {
+            success: (products,
+                totalQuantity,
+                totalPrice,
+                subTotal,
+                discountPercentage,
+                appliedDiscount,
+                paymentType,
+                nominalBayar,
+                idKasir,
+                namaKasir,
+                customerName) {
               context.read<CheckoutBloc>().add(const CheckoutEvent.started());
+
+              // Use the correct variables that match the state
+              final qty = totalQuantity;
+              final total = totalPrice;
 
               return Column(
                 mainAxisSize: MainAxisSize.min,
@@ -49,7 +62,7 @@ class PaymentSuccessDialog extends StatelessWidget {
                 children: [
                   LabelValue(
                     label: 'Payment Method',
-                    value: paymentType == 'QRIS' ? 'QRIS' : 'Cash',
+                    value: paymentType == 'QRIS' ? 'QRIS' : paymentType,
                   ),
                   const Divider(height: 16.0),
                   LabelValue(
@@ -64,7 +77,7 @@ class PaymentSuccessDialog extends StatelessWidget {
                   const Divider(height: 16.0),
                   LabelValue(
                     label: 'Cashier Name',
-                    value: nameKasir,
+                    value: namaKasir,
                   ),
                   const Divider(height: 16.0),
                   LabelValue(
@@ -96,8 +109,8 @@ class PaymentSuccessDialog extends StatelessWidget {
                         child: Button.outlined(
                           onPressed: () async {
                             final printValue = await CwbPrint.instance
-                                .printOrderV2(data, qty, total, paymentType,
-                                    nominal, nameKasir, customerName);
+                                .printOrderV2(products, qty, total, paymentType,
+                                    nominalBayar, namaKasir, customerName);
                             await PrintBluetoothThermal.writeBytes(printValue);
                           },
                           label: 'Print',

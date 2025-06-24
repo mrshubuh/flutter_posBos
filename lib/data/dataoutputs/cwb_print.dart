@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:image/image.dart' as img;
 import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
 
-import '../../presentation/home/models/order_item.dart';
+import '../../data/models/order_item_model.dart';
 
 class CwbPrint {
   CwbPrint._init();

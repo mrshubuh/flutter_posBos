@@ -3,9 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_pos/core/extensions/int_ext.dart';
 import 'package:flutter_pos/presentation/home/bloc/checkout/checkout_bloc.dart';
-import 'package:flutter_pos/presentation/home/models/order_item.dart';
+import 'package:flutter_pos/data/models/order_item_model.dart';
 
-import '../../../core/components/spaces.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/variables.dart';
 
@@ -23,98 +22,119 @@ class OrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isSmallScreen = MediaQuery.of(context).size.width < 360;
+    final paddingValue = isSmallScreen ? 8.0 : 16.0;
+    final imageSize = isSmallScreen ? 56.0 : 76.0;
+    
     return Stack(
       alignment: Alignment.bottomRight,
       children: [
         Container(
           margin: padding,
-          padding: const EdgeInsets.all(16.0),
+          padding: EdgeInsets.all(paddingValue),
           decoration: ShapeDecoration(
             color: Colors.white,
             shape: RoundedRectangleBorder(
-              side: const BorderSide(width: 2, color: Color(0xFFC7D0EB)),
+              side: const BorderSide(width: 1.5, color: Color(0xFFC7D0EB)),
               borderRadius: BorderRadius.circular(10),
             ),
           ),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ClipRRect(
-                  borderRadius: const BorderRadius.all(Radius.circular(50.0)),
-                  child: CachedNetworkImage(
-                    width: 76,
-                    height: 76,
-                    fit: BoxFit.cover,
-                    imageUrl: '${Variables.imageBaseUrl}${data.product.image}',
-                    placeholder: (context, url) =>
-                        const CircularProgressIndicator(),
-                    errorWidget: (context, url, error) => const Icon(
-                      Icons.food_bank_outlined,
-                      size: 80,
-                    ),
-                  )),
-              const SpaceWidth(24.0),
-              Flexible(
+                borderRadius: BorderRadius.circular(8.0),
+                child: CachedNetworkImage(
+                  width: imageSize,
+                  height: imageSize,
+                  fit: BoxFit.cover,
+                  imageUrl: '${Variables.imageBaseUrl}${data.product.image}',
+                  placeholder: (context, url) => const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  errorWidget: (context, url, error) => const Icon(
+                    Icons.food_bank_outlined,
+                    size: 32,
+                    color: Colors.grey,
+                  ),
+                ),
+              ),
+              SizedBox(width: isSmallScreen ? 12.0 : 16.0),
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Flexible(
+                        Expanded(
                           child: Text(
                             data.product.name,
-                            maxLines: 1,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
+                              fontSize: isSmallScreen ? 14 : 16,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
-                        const SpaceWidth(8.0),
+                        const SizedBox(width: 8.0),
                         Text(
                           data.product.price.currencyFormatRp,
-                          style: const TextStyle(
+                          style: TextStyle(
+                            fontSize: isSmallScreen ? 14 : 16,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],
                     ),
-                    const SpaceHeight(20.0),
+                    const SizedBox(height: 12.0),
                     StatefulBuilder(
                       builder: (context, setState) => Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          GestureDetector(
-                            onTap: () {
-                              context.read<CheckoutBloc>().add(
-                                  CheckoutEvent.removeCheckout(data.product));
-                            },
-                            child: Container(
-                              color: AppColors.white,
-                              child: const Icon(
-                                Icons.remove_circle,
-                                color: AppColors.primary,
+                          Row(
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  context.read<CheckoutBloc>().add(
+                                      CheckoutEvent.removeCheckout(data.product));
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  child: const Icon(
+                                    Icons.remove_circle,
+                                    color: AppColors.primary,
+                                    size: 24,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 40.0,
-                            child: Center(
-                              child: Text(data.quantity.toString()),
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              context
-                                  .read<CheckoutBloc>()
-                                  .add(CheckoutEvent.addCheckout(data.product));
-                            },
-                            child: Container(
-                              color: AppColors.white,
-                              child: const Icon(
-                                Icons.add_circle,
-                                color: AppColors.primary,
+                              SizedBox(
+                                width: 32.0,
+                                child: Center(
+                                  child: Text(
+                                    data.quantity.toString(),
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                ),
                               ),
-                            ),
+                              GestureDetector(
+                                onTap: () {
+                                  context.read<CheckoutBloc>().add(
+                                      CheckoutEvent.addCheckout(data.product));
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  child: const Icon(
+                                    Icons.add_circle,
+                                    color: AppColors.primary,
+                                    size: 24,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -125,13 +145,17 @@ class OrderCard extends StatelessWidget {
             ],
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.only(right: 16.0),
+        Positioned(
+          top: 4,
+          right: 4,
           child: IconButton(
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
             onPressed: onDeleteTap,
             icon: const Icon(
-              Icons.highlight_off,
-              color: AppColors.primary,
+              Icons.close,
+              color: Colors.grey,
+              size: 20,
             ),
           ),
         ),

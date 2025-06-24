@@ -2,7 +2,7 @@ import 'dart:convert';
 
 
 import '../../../../home/models/draft_order_item.dart';
-import '../../../../home/models/order_item.dart';
+import 'package:flutter_pos/data/models/order_item_model.dart';
 
 class DraftOrderModel {
   final int? id;
