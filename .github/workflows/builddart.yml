@@ -31,9 +31,9 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.29.0'
           channel: 'stable'
           cache: true
+          # Menggunakan latest stable version otomatis
 
       - name: Verify Flutter installation
         run: |
@@ -46,6 +46,10 @@ jobs:
       - name: Get Flutter dependencies
         run: flutter pub get
 
+      - name: Run code generation (if needed)
+        run: flutter pub run build_runner build --delete-conflicting-outputs
+        continue-on-error: true
+
       - name: Run Flutter analyzer
         run: flutter analyze
         continue-on-error: true
@@ -54,29 +58,32 @@ jobs:
         run: flutter test
         continue-on-error: true
 
-      - name: Build APK
-        run: flutter build apk --release --no-shrink
+      - name: Build APK (Release)
+        run: flutter build apk --release --verbose
 
-      - name: Build App Bundle
-        run: flutter build appbundle --release
+      - name: Build App Bundle (Release)
+        run: flutter build appbundle --release --verbose
 
       - name: Get version from pubspec
         id: version
         run: |
           VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
 
-      - name: Rename APK
+      - name: Rename APK with version
         run: |
+          mkdir -p build/outputs
           cp build/app/outputs/flutter-apk/app-release.apk \
-             build/app/outputs/flutter-apk/flutter-pos-${{ steps.version.outputs.version }}.apk
+             build/outputs/flutter-pos-${{ steps.version.outputs.version }}.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: flutter-pos-apk-${{ steps.version.outputs.version }}
-          path: build/app/outputs/flutter-apk/flutter-pos-${{ steps.version.outputs.version }}.apk
+          path: build/outputs/flutter-pos-${{ steps.version.outputs.version }}.apk
           retention-days: 30
+          if-no-files-found: error
 
       - name: Upload App Bundle artifact
         uses: actions/upload-artifact@v4
@@ -84,13 +91,11 @@ jobs:
           name: flutter-pos-aab-${{ steps.version.outputs.version }}
           path: build/app/outputs/bundle/release/app-release.aab
           retention-days: 30
+          if-no-files-found: error
 
-      - name: Create Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            build/app/outputs/flutter-apk/flutter-pos-${{ steps.version.outputs.version }}.apk
-            build/app/outputs/bundle/release/app-release.aab
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Summary
+        run: |
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "✅ APK built successfully" >> $GITHUB_STEP_SUMMARY
+          echo "📦 Version: ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "📱 APK Size: $(du -h
