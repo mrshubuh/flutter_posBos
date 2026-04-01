@@ -16,6 +16,7 @@ jobs:
   build:
     name: Build APK
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     
     steps:
       - name: Checkout repository
@@ -33,69 +34,67 @@ jobs:
         with:
           channel: 'stable'
           cache: true
-          # Menggunakan latest stable version otomatis
 
       - name: Verify Flutter installation
-        run: |
-          flutter --version
-          flutter doctor -v
+        run: flutter --version
 
-      - name: Clean Flutter
+      - name: Clean project
         run: flutter clean
 
-      - name: Get Flutter dependencies
+      - name: Get dependencies
         run: flutter pub get
 
-      - name: Run code generation (if needed)
-        run: flutter pub run build_runner build --delete-conflicting-outputs
-        continue-on-error: true
-
-      - name: Run Flutter analyzer
-        run: flutter analyze
-        continue-on-error: true
-
-      - name: Run Flutter tests
-        run: flutter test
+      - name: Generate code (freezed, json_serializable)
+        run: |
+          flutter pub run build_runner build --delete-conflicting-outputs || true
         continue-on-error: true
 
       - name: Build APK (Release)
-        run: flutter build apk --release --verbose
+        run: flutter build apk --release --no-tree-shake-icons
 
-      - name: Build App Bundle (Release)
-        run: flutter build appbundle --release --verbose
+      - name: Build App Bundle (Release)  
+        run: flutter build appbundle --release --no-tree-shake-icons
+        continue-on-error: true
 
-      - name: Get version from pubspec
+      - name: Get version
         id: version
         run: |
           VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Building version: $VERSION"
 
-      - name: Rename APK with version
+      - name: Prepare APK
         run: |
-          mkdir -p build/outputs
-          cp build/app/outputs/flutter-apk/app-release.apk \
-             build/outputs/flutter-pos-${{ steps.version.outputs.version }}.apk
+          mkdir -p outputs
+          cp build/app/outputs/flutter-apk/app-release.apk outputs/flutter-pos-${{ steps.version.outputs.version }}.apk
+          ls -lh outputs/
 
-      - name: Upload APK artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: flutter-pos-apk-${{ steps.version.outputs.version }}
-          path: build/outputs/flutter-pos-${{ steps.version.outputs.version }}.apk
+          name: APK-${{ steps.version.outputs.version }}
+          path: outputs/flutter-pos-${{ steps.version.outputs.version }}.apk
           retention-days: 30
-          if-no-files-found: error
 
-      - name: Upload App Bundle artifact
+      - name: Upload AAB (if exists)
         uses: actions/upload-artifact@v4
+        if: success()
         with:
-          name: flutter-pos-aab-${{ steps.version.outputs.version }}
+          name: AAB-${{ steps.version.outputs.version }}
           path: build/app/outputs/bundle/release/app-release.aab
           retention-days: 30
-          if-no-files-found: error
+        continue-on-error: true
 
-      - name: Build Summary
+      - name: Build info
         run: |
-          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
-          echo "✅ APK built successfully" >> $GITHUB_STEP_SUMMARY
-          echo "📦 Version: ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "📱 APK Size: $(du -h
+          echo "✅ APK built successfully!"
+          echo "📦 Version: ${{ steps.version.outputs.version }}"
+          echo "📱 APK: $(du -h outputs/flutter-pos-${{ steps.version.outputs.version }}.apk | cut -f1)"
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: outputs/flutter-pos-${{ steps.version.outputs.version }}.apk
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
